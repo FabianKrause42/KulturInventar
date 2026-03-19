@@ -19,7 +19,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # public/ → KulturInventar/html/ (Web-Root, Domain zeigt hierhin)
+      # public/ → KulturInventar/html/ (Web-Root)
+      # STRATO_SFTP_PATH muss auf /KulturInventar/html zeigen
       - name: Upload public/ to web root
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -28,11 +29,12 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./public/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/html"
+          remote_path: "${{ secrets.STRATO_SFTP_PATH }}"
           delete_remote_files: false
           sftp_only: true
 
-      # src/ → KulturInventar/src/ (nicht öffentlich, enthält DB-Zugangsdaten)
+      # src/ → KulturInventar/src/ (nicht öffentlich)
+      # STRATO_SFTP_ROOT muss auf /KulturInventar zeigen
       - name: Upload src/ outside web root
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -41,7 +43,7 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./src/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/src"
+          remote_path: "${{ secrets.STRATO_SFTP_ROOT }}/src"
           delete_remote_files: false
           sftp_only: true
 
@@ -54,6 +56,6 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./database/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/database"
+          remote_path: "${{ secrets.STRATO_SFTP_ROOT }}/database"
           delete_remote_files: false
           sftp_only: true
