@@ -1,0 +1,552 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* =========================================
+   KulturInventar – Design-System
+   Wireframe-getreu · Mobile-first
+   ========================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --color-bg:        #f0f0f0;
+    --color-surface:   #ffffff;
+    --color-border:    #1b1b1b;
+    --color-text:      #1b1b1b;
+    --color-muted:     #777777;
+    --color-divider:   #bbbbbb;
+    --color-btn-save:  #a9ffac;
+    --color-btn-back:  #ffa9a9;
+    --color-error-bg:  #fff5f5;
+    --color-error:     #c0392b;
+    --color-error-border: #fca5a5;
+
+    --border:          2px solid #1b1b1b;
+    --spacing:         1rem;
+    --spacing-sm:      0.5rem;
+    --spacing-lg:      1.5rem;
+    --radius:          8px;
+}
+
+/* =========================================
+   Basis
+   ========================================= */
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.55;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    padding: var(--spacing);
+    max-width: 640px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================
+   Header
+   ========================================= */
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--spacing);
+    border-bottom: var(--border);
+    margin-bottom: var(--spacing-lg);
+}
+
+header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.header-user {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+.btn-logout {
+    font-size: 0.85rem;
+    color: var(--color-text);
+    text-decoration: none;
+    padding: 0.3rem 0.75rem;
+    border: var(--border);
+    border-radius: 99px;
+    white-space: nowrap;
+}
+
+.btn-logout:hover {
+    background-color: var(--color-text);
+    color: var(--color-surface);
+}
+
+/* =========================================
+   Main
+   ========================================= */
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing);
+    min-height: calc(100dvh - 2rem);
+}
+
+/* =========================================
+   Footer
+   ========================================= */
+
+footer {
+    margin-top: calc(var(--spacing) * 2.5);
+    padding-top: var(--spacing);
+    border-top: 1px solid var(--color-divider);
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-align: center;
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+
+button,
+.btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 1.375rem;
+    font-weight: 400;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.1s ease;
+}
+
+button:active,
+.btn:active {
+    background-color: #e0e0e0;
+}
+
+.btn-save {
+    background-color: var(--color-btn-save);
+}
+
+.btn-back {
+    background-color: var(--color-btn-back);
+}
+
+/* =========================================
+   Eingabefelder
+   ========================================= */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+select,
+textarea {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(27, 27, 27, 0.15);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--color-muted);
+}
+
+/* =========================================
+   Karte (generisch)
+   ========================================= */
+
+.card {
+    background-color: var(--color-surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: var(--spacing);
+}
+
+/* =========================================
+   Fehlermeldung
+   ========================================= */
+
+.error-message {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    border: 2px solid var(--color-error-border);
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem;
+    font-size: 0.92rem;
+    text-align: center;
+}
+
+/* =========================================
+   Login – PIN-Pad
+   ========================================= */
+
+.login-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding-top: 8vh;
+    background-color: var(--color-bg);
+}
+
+.login-wrap {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing);
+    padding: 0 var(--spacing);
+}
+
+.login-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    text-align: center;
+}
+
+.login-subtitle {
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    text-align: center;
+    margin-top: -0.5rem;
+}
+
+/* PIN-Anzeige (_ _ _ _) */
+.pin-display {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 2.5rem;
+    color: #222;
+    margin: 1rem 0;
+    letter-spacing: 0.1em;
+}
+
+.pin-display .pin-dot {
+    text-align: center;
+    line-height: 1;
+}
+
+/* Nummerntastatur */
+.pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.pin-key {
+    aspect-ratio: 1.1 / 1;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.875rem;
+    color: #000;
+    background-color: #f2f2f2;
+    border: 1px solid #979797;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.1s;
+    width: 100%;
+}
+
+.pin-key:active {
+    background-color: #e0e0e0;
+}
+
+.pin-key-delete {
+    color: #c26262;
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+.pin-key-delete img,
+.pin-key-enter img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    display: block;
+}
+
+.pin-key-enter {
+    color: #3a3;
+    font-size: 1.5rem;
+}
+
+/* =========================================
+   Startseite – Suche
+   ========================================= */
+
+.search-section {
+    margin-bottom: var(--spacing-sm);
+}
+
+.search-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+/* Suchfeld-Wrapper (Icon + Input) */
+.search-field-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--color-surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    height: 57px;
+}
+
+.search-field-icon {
+    position: absolute;
+    left: 14px;
+    pointer-events: none;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+}
+
+input.search-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1.125rem;
+    color: var(--color-text);
+    padding: 0 1rem 0 46px;
+    border-radius: var(--radius);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input.search-input:focus {
+    outline: none;
+}
+
+input.search-input::placeholder {
+    color: var(--color-text);
+    opacity: 1;
+}
+
+/* QR-Scan Button */
+.btn-scan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 85px;
+    height: 57px;
+    flex-shrink: 0;
+    background-color: var(--color-surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    cursor: not-allowed;
+    font-size: 1rem;
+    padding: 0;
+}
+
+/* =========================================
+   Startseite – Trefferliste (flache Zeilen)
+   ========================================= */
+
+.result-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.result-label {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    padding-bottom: 0.4rem;
+}
+
+.no-results {
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    padding: var(--spacing-lg) 0;
+    text-align: center;
+}
+
+/* Liste ohne Bullets */
+.result-list {
+    list-style: none;
+    border-top: 1px solid var(--color-divider);
+}
+
+/* Ergebnis-Zeile */
+.result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.75rem 0;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--color-divider);
+}
+
+.result-row:active {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Thumbnail */
+.result-thumb {
+    width: 100px;
+    height: 95px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background-color: #eee;
+}
+
+/* Text neben dem Thumbnail */
+.result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.result-bezeichnung {
+    font-size: 1.375rem;
+    font-weight: 400;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-standort {
+    font-size: 1.375rem;
+    color: var(--color-muted);
+}
+
+/* =========================================
+   Startseite – Neuen Artikel anlegen
+   ========================================= */
+
+.new-item-wrap {
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    background-color: var(--color-bg);
+    padding-top: var(--spacing);
+    padding-bottom: var(--spacing);
+    border-top: 1px solid var(--color-divider);
+}
+
+.new-item-wrap .btn {
+    font-size: 1.375rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* =========================================
+   Formular – Artikel anlegen
+   ========================================= */
+
+main > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.form-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: var(--spacing);
+}
+
+.form-header input {
+    flex: 1;
+}
+
+.btn-scan-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 145px;
+    height: 48px;
+    flex-shrink: 0;
+    background-color: var(--color-surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    cursor: not-allowed;
+    color: var(--color-text);
+}
+
+.form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    position: sticky;
+    bottom: 0;
+    background-color: var(--color-bg);
+    margin-top: auto;
+    padding-top: var(--spacing);
+    padding-bottom: var(--spacing);
+    border-top: 1px solid var(--color-divider);
+}

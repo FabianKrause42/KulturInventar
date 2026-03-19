@@ -1,0 +1,25 @@
+# Lokale Konfiguration & Zugangsdaten
+db_login.txt
+src/config/config.local.php
+.env
+.env.*
+
+# Upload-Ordner
+public/uploads/
+storage/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# IDE / Editoren
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# PHP
+*.log
+
+# Lokale Hilfsskripte – nicht deployen
+tools/
