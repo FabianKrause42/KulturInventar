@@ -161,6 +161,7 @@ $f = [
                     placeholder="Menge"
                     value="<?= htmlspecialchars($f['menge']) ?>"
                     min="1"
+                    inputmode="numeric"
                 >
 
                 <input

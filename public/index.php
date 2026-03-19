@@ -3,32 +3,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/auth/session.php';
 require_login();
-
-require_once __DIR__ . '/../src/config/database.php';
-require_once __DIR__ . '/../src/helpers/placeholder.php';
-
-$query   = trim($_GET['q'] ?? '');
-$treffer = [];
-$gesucht = false;
-
-if ($query !== '') {
-    $gesucht = true;
-    if ($pdo !== null) {
-        $like = '%' . $query . '%';
-        $stmt = $pdo->prepare(
-            'SELECT id, inventarnummer, bezeichnung, kategorie, standort, bild_pfad
-             FROM inventar
-             WHERE inventarnummer LIKE ?
-                OR bezeichnung    LIKE ?
-                OR kategorie      LIKE ?
-                OR standort       LIKE ?
-                OR bemerkung      LIKE ?
-             ORDER BY bezeichnung ASC'
-        );
-        $stmt->execute([$like, $like, $like, $like, $like]);
-        $treffer = $stmt->fetchAll();
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -44,75 +18,37 @@ if ($query !== '') {
 
         <!-- ── Suche ─────────────────────────────────── -->
         <section class="search-section">
-            <form method="get" action="/index.php" role="search" autocomplete="off">
-                <div class="search-row">
-                    <div class="search-field-wrap">
-                        <span class="search-field-icon" aria-hidden="true">
-                            <img src="/assets/img/icons/search.png" width="20" height="20" alt="">
-                        </span>
-                        <input
-                            type="search"
-                            name="q"
-                            id="q"
-                            class="search-input"
-                            placeholder="Suchen"
-                            value="<?= htmlspecialchars($query) ?>"
-                            autofocus
-                        >
-                    </div>
-                    <button
-                        type="button"
-                        class="btn-scan"
-                        title="QR-Code scannen (bald verfügbar)"
-                        disabled
-                        aria-label="QR-Code scannen"
+            <div class="search-row">
+                <div class="search-field-wrap">
+                    <span class="search-field-icon" aria-hidden="true">
+                        <img src="/assets/img/icons/search.png" width="20" height="20" alt="">
+                    </span>
+                    <input
+                        type="search"
+                        id="q"
+                        class="search-input"
+                        placeholder="Suchen"
+                        autocomplete="off"
+                        autofocus
                     >
-                        <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
-                    </button>
                 </div>
-            </form>
+                <button
+                    type="button"
+                    class="btn-scan"
+                    title="QR-Code scannen (bald verfügbar)"
+                    disabled
+                    aria-label="QR-Code scannen"
+                >
+                    <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
+                </button>
+            </div>
         </section>
 
         <!-- ── Trefferliste ──────────────────────────── -->
         <section class="result-section">
-            <?php if ($gesucht && count($treffer) === 0): ?>
-
-                <p class="no-results">
-                    Keine Treffer für „<?= htmlspecialchars($query) ?>".
-                </p>
-
-            <?php elseif ($gesucht): ?>
-
-                <p class="result-label"><?= count($treffer) ?> Ergebnisse</p>
-
-                <ul class="result-list">
-                    <?php foreach ($treffer as $artikel): ?>
-                        <li>
-                            <a href="/artikel.php?id=<?= (int)$artikel['id'] ?>" class="result-row">
-                                <img
-                                    class="result-thumb"
-                                    src="<?= get_thumbnail($artikel) ?>"
-                                    alt="<?= htmlspecialchars($artikel['bezeichnung']) ?>"
-                                    loading="lazy"
-                                    width="100"
-                                    height="95"
-                                >
-                                <div class="result-info">
-                                    <span class="result-bezeichnung">
-                                        <?= htmlspecialchars($artikel['bezeichnung']) ?>
-                                    </span>
-                                    <?php if (!empty($artikel['standort'])): ?>
-                                        <span class="result-standort">
-                                            Standort: <?= htmlspecialchars($artikel['standort']) ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-
-            <?php endif; ?>
+            <p class="result-label" id="result-label"></p>
+            <ul class="result-list" id="result-list"></ul>
+            <div id="scroll-sentinel"></div>
         </section>
 
         <!-- ── Neuer Artikel ─────────────────────────── -->
@@ -121,6 +57,111 @@ if ($query !== '') {
         </div>
 
     </main>
+
+    <script>
+    (function () {
+        var input     = document.getElementById('q');
+        var list      = document.getElementById('result-list');
+        var label     = document.getElementById('result-label');
+        var sentinel  = document.getElementById('scroll-sentinel');
+
+        var currentQuery = '';
+        var offset       = 0;
+        var total        = 0;
+        var loading      = false;
+        var debounceTimer;
+
+        // ── Debounced Input ──────────────────────────
+        input.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                var q = input.value.trim();
+                if (q === currentQuery) return;
+                currentQuery = q;
+                reset();
+                if (q.length >= 3) {
+                    loadMore();
+                } else {
+                    label.textContent = '';
+                }
+            }, 300);
+        });
+
+        // ── Reset bei neuer Suche ────────────────────
+        function reset() {
+            offset = 0;
+            total  = 0;
+            list.innerHTML = '';
+            label.textContent = '';
+        }
+
+        // ── Nächste Seite laden ──────────────────────
+        function loadMore() {
+            if (loading) return;
+            loading = true;
+
+            var url = '/api/search.php?q=' + encodeURIComponent(currentQuery) + '&offset=' + offset;
+
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    total = data.total;
+                    renderResults(data.results);
+                    offset += data.results.length;
+
+                    if (offset === 0 || data.total === 0) {
+                        label.textContent = 'Keine Treffer für „' + currentQuery + '"';
+                    } else {
+                        label.textContent = total + ' Ergebnis' + (total === 1 ? '' : 'se');
+                    }
+                })
+                .catch(function () {
+                    label.textContent = 'Fehler beim Laden.';
+                })
+                .finally(function () {
+                    loading = false;
+                });
+        }
+
+        // ── Zeilen rendern ───────────────────────────
+        function renderResults(results) {
+            results.forEach(function (item) {
+                var li = document.createElement('li');
+                li.innerHTML =
+                    '<a href="/artikel.php?id=' + item.id + '" class="result-row">' +
+                        '<img class="result-thumb" src="' + escHtml(item.thumb) + '"' +
+                            ' alt="' + escHtml(item.bezeichnung) + '"' +
+                            ' loading="lazy" width="100" height="95">' +
+                        '<div class="result-info">' +
+                            '<span class="result-bezeichnung">' + escHtml(item.bezeichnung) + '</span>' +
+                            (item.standort
+                                ? '<span class="result-standort">Standort: ' + escHtml(item.standort) + '</span>'
+                                : '') +
+                        '</div>' +
+                    '</a>';
+                list.appendChild(li);
+            });
+        }
+
+        // ── Infinite Scroll ──────────────────────────
+        var observer = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting && currentQuery.length >= 3 && offset < total) {
+                loadMore();
+            }
+        }, { rootMargin: '200px' });
+
+        observer.observe(sentinel);
+
+        // ── HTML escapen ─────────────────────────────
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    }());
+    </script>
 
 </body>
 </html>
