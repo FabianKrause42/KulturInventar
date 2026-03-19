@@ -184,7 +184,7 @@ textarea:focus {
 }
 
 textarea {
-    min-height: 120px;
+    min-height: calc(1.55em * 3 + 1.5rem);
     resize: vertical;
 }
 

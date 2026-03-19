@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validierung
     if ($inventarnummer === '') {
         $fehler[] = 'Inventarnummer ist Pflicht.';
+    } elseif (!preg_match('/^\d{4}$/', $inventarnummer)) {
+        $fehler[] = 'Inventarnummer muss genau 4 Ziffern haben.';
     }
     if ($bezeichnung === '') {
         $fehler[] = 'Bezeichnung ist Pflicht.';
@@ -105,6 +107,9 @@ $f = [
                     name="inventarnummer"
                     placeholder="Inventarnummer"
                     value="<?= htmlspecialchars($f['inventarnummer']) ?>"
+                    pattern="[0-9]{4}"
+                    maxlength="4"
+                    inputmode="numeric"
                     required
                     autofocus
                 >

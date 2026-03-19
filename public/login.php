@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <!-- Verstecktes Formular – wird per JS abgeschickt -->
-        <form method="post" action="/login.php" id="pin-form">
+        <form method="post" action="/login.php" id="pin-form" style="display:none">
             <input type="hidden" name="pin" id="pin-value">
         </form>
 
