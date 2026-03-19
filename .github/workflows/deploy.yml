@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # public/ → html/ (Web-Root, öffentlich erreichbar)
+      # public/ → Web-Root (STRATO_SFTP_PATH, z.B. /html oder /)
       - name: Upload public/ to web root
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -28,11 +28,11 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./public/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/html"
+          remote_path: "${{ secrets.STRATO_SFTP_PATH }}"
           delete_remote_files: false
           sftp_only: true
 
-      # src/ → neben html/ (nicht öffentlich, enthält DB-Zugangsdaten)
+      # src/ → STRATO_SFTP_ROOT (eine Ebene über html, z.B. /)
       - name: Upload src/ outside web root
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -41,11 +41,11 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./src/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/src"
+          remote_path: "${{ secrets.STRATO_SFTP_ROOT }}/src"
           delete_remote_files: false
           sftp_only: true
 
-      # database/ → neben html/ (Schema-Datei, nicht öffentlich)
+      # database/ → STRATO_SFTP_ROOT
       - name: Upload database/ outside web root
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -54,6 +54,6 @@ jobs:
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
           local_path: "./database/*"
-          remote_path: "${{ secrets.STRATO_SFTP_PATH }}/database"
+          remote_path: "${{ secrets.STRATO_SFTP_ROOT }}/database"
           delete_remote_files: false
           sftp_only: true
