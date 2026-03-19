@@ -1,0 +1,29 @@
+name: Deploy to STRATO (SFTP)
+
+on:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: deploy-strato
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.5
+        with:
+          username: ${{ secrets.STRATO_SFTP_USER }}
+          password: ${{ secrets.STRATO_SFTP_PASS }}
+          server: ${{ secrets.STRATO_SFTP_HOST }}
+          port: 22
+          local_path: "./*"
+          remote_path: ${{ secrets.STRATO_SFTP_PATH }}
+          delete_remote_files: false
+          sftp_only: true
