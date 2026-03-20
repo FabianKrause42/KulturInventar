@@ -157,16 +157,24 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
         var placeholder = document.getElementById('placeholder');
         var scanning  = true;
 
-        // Kamera starten
+        // Kamera starten – nur in sicherem Kontext (HTTPS / localhost) verfügbar
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            status.textContent = 'Kamera nicht verfügbar. Bitte die Seite über HTTPS aufrufen.';
+            return;
+        }
+
         navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
+            video: { facingMode: { ideal: 'environment' } }
         }).then(function (stream) {
             video.srcObject = stream;
             placeholder.style.display = 'none';
             status.textContent = 'Halten Sie den QR-Code in den Rahmen';
             requestAnimationFrame(tick);
         }).catch(function (err) {
-            status.textContent = 'Kamera nicht verfügbar: ' + err.message;
+            var msg = err.name === 'NotAllowedError'
+                ? 'Kamerazugriff verweigert. Bitte Berechtigung erteilen.'
+                : 'Kamera nicht verfügbar: ' + err.message;
+            status.textContent = msg;
         });
 
         function tick() {
