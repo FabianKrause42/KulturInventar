@@ -35,8 +35,7 @@ require_login();
                 <button
                     type="button"
                     class="btn-scan"
-                    title="QR-Code scannen (bald verfügbar)"
-                    disabled
+                    id="btn-scan-suche"
                     aria-label="QR-Code scannen"
                 >
                     <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
@@ -161,6 +160,12 @@ require_login();
                 .replace(/"/g, '&quot;');
         }
     }());
+    </script>
+
+    <script>
+    document.getElementById('btn-scan-suche').addEventListener('click', function () {
+        window.location.href = '/scanner.php?context=suche';
+    });
     </script>
 
 </body>

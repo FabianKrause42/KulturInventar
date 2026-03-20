@@ -1,0 +1,229 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../src/auth/session.php';
+require_login();
+
+$context = $_GET['context'] ?? 'suche'; // 'suche' oder 'neu'
+
+// Alle Felder die beim Zurücknavigieren erhalten bleiben sollen
+$felder = [
+    'bezeichnung' => $_GET['bezeichnung'] ?? '',
+    'kategorie'   => $_GET['kategorie']   ?? '',
+    'standort'    => $_GET['standort']    ?? '',
+    'menge'       => $_GET['menge']       ?? '1',
+    'masse'       => $_GET['masse']       ?? '',
+    'bemerkung'   => $_GET['bemerkung']   ?? '',
+];
+
+// Query-String für Rücknavigation zu artikel_neu.php
+$backParams = http_build_query(array_merge(['context' => $context], $felder));
+
+$backUrl = $context === 'neu'
+    ? '/artikel_neu.php?' . http_build_query($felder)
+    : '/index.php';
+
+$backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
+?>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-Code scannen</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <style>
+        .scanner-wrap {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100dvh - 2rem);
+            gap: var(--spacing);
+        }
+
+        .scanner-title {
+            font-size: 1.375rem;
+            font-weight: 400;
+            color: var(--color-text);
+            text-align: center;
+            padding-top: var(--spacing);
+        }
+
+        .scanner-viewport {
+            position: relative;
+            width: 100%;
+            background: #d9d9d9;
+            border-radius: var(--radius);
+            overflow: hidden;
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .scanner-viewport video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scanner-viewport canvas {
+            display: none;
+        }
+
+        .scanner-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scanner-placeholder img {
+            width: 45%;
+            max-width: 180px;
+            opacity: 0.3;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        /* Fadenkreuz-Rahmen */
+        .scanner-frame {
+            width: 55%;
+            aspect-ratio: 1;
+            border: 3px solid rgba(255,255,255,0.8);
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+        }
+
+        .scanner-status {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--color-muted);
+            min-height: 1.4em;
+        }
+
+        .scanner-actions {
+            position: sticky;
+            bottom: 0;
+            background: var(--color-bg);
+            padding-top: var(--spacing);
+            padding-bottom: var(--spacing);
+            border-top: 1px solid var(--color-divider);
+        }
+    </style>
+</head>
+<body>
+    <main class="scanner-wrap">
+
+        <p class="scanner-title">Bitte QR-Code scannen</p>
+
+        <div class="scanner-viewport" id="viewport">
+            <video id="video" playsinline autoplay muted></video>
+            <canvas id="canvas"></canvas>
+            <div class="scanner-placeholder" id="placeholder">
+                <img src="/assets/img/icons/camera.png" alt="">
+            </div>
+            <div class="scanner-overlay">
+                <div class="scanner-frame"></div>
+            </div>
+        </div>
+
+        <p class="scanner-status" id="status">Kamera wird gestartet…</p>
+
+        <div class="scanner-actions">
+            <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-back" id="back-btn">
+                <?= htmlspecialchars($backLabel) ?>
+            </a>
+        </div>
+
+    </main>
+
+    <script src="/assets/js/jsqr.min.js"></script>
+    <script>
+    (function () {
+        var context   = <?= json_encode($context) ?>;
+        var felder    = <?= json_encode($felder) ?>;
+        var video     = document.getElementById('video');
+        var canvas    = document.getElementById('canvas');
+        var ctx       = canvas.getContext('2d');
+        var status    = document.getElementById('status');
+        var placeholder = document.getElementById('placeholder');
+        var scanning  = true;
+
+        // Kamera starten
+        navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        }).then(function (stream) {
+            video.srcObject = stream;
+            placeholder.style.display = 'none';
+            status.textContent = 'Halten Sie den QR-Code in den Rahmen';
+            requestAnimationFrame(tick);
+        }).catch(function (err) {
+            status.textContent = 'Kamera nicht verfügbar: ' + err.message;
+        });
+
+        function tick() {
+            if (!scanning) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width  = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                var code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+
+                if (code) {
+                    var data = code.data.trim();
+                    // Prüfen ob 4-stellige Nummer
+                    if (/^\d{4}$/.test(data)) {
+                        scanning = false;
+                        status.textContent = 'Erkannt: ' + data;
+                        handleResult(data);
+                        return;
+                    }
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        function handleResult(nummer) {
+            if (context === 'neu') {
+                // Nummer + alle bisherigen Felder zurück zu artikel_neu.php
+                var params = new URLSearchParams(felder);
+                params.set('inventarnummer', nummer);
+                window.location.href = '/artikel_neu.php?' + params.toString();
+            } else {
+                // Inventarnummer in DB nachschlagen → artikel.php
+                fetch('/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.id) {
+                            window.location.href = '/artikel.php?id=' + data.id;
+                        } else {
+                            status.textContent = 'Artikel ' + nummer + ' nicht gefunden.';
+                            scanning = true;
+                            requestAnimationFrame(tick);
+                        }
+                    })
+                    .catch(function () {
+                        status.textContent = 'Fehler beim Nachschlagen.';
+                        scanning = true;
+                        requestAnimationFrame(tick);
+                    });
+            }
+        }
+    }());
+    </script>
+</body>
+</html>

@@ -67,15 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Formularwerte für Neuanzeige nach Fehler
+// Formularwerte: POST hat Priorität (Fehlerfall), dann GET (Rückkehr vom Scanner), dann leer
 $f = [
-    'inventarnummer' => $_POST['inventarnummer'] ?? '',
-    'bezeichnung'    => $_POST['bezeichnung']    ?? '',
-    'kategorie'      => $_POST['kategorie']      ?? '',
-    'standort'       => $_POST['standort']       ?? '',
-    'menge'          => $_POST['menge']          ?? '1',
-    'masse'          => $_POST['masse']          ?? '',
-    'bemerkung'      => $_POST['bemerkung']      ?? '',
+    'inventarnummer' => $_POST['inventarnummer'] ?? $_GET['inventarnummer'] ?? '',
+    'bezeichnung'    => $_POST['bezeichnung']    ?? $_GET['bezeichnung']    ?? '',
+    'kategorie'      => $_POST['kategorie']      ?? $_GET['kategorie']      ?? '',
+    'standort'       => $_POST['standort']       ?? $_GET['standort']       ?? '',
+    'menge'          => $_POST['menge']          ?? $_GET['menge']          ?? '1',
+    'masse'          => $_POST['masse']          ?? $_GET['masse']          ?? '',
+    'bemerkung'      => $_POST['bemerkung']      ?? $_GET['bemerkung']      ?? '',
 ];
 ?>
 <!DOCTYPE html>
@@ -116,8 +116,7 @@ $f = [
                 <button
                     type="button"
                     class="btn-scan-form"
-                    title="QR-Code scannen (bald verfügbar)"
-                    disabled
+                    id="btn-scan-neu"
                     aria-label="QR-Code scannen"
                 >
                     <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
@@ -187,6 +186,17 @@ $f = [
         </form>
 
     </main>
+
+    <script>
+    document.getElementById('btn-scan-neu').addEventListener('click', function () {
+        var params = new URLSearchParams({ context: 'neu' });
+        ['bezeichnung','kategorie','standort','menge','masse','bemerkung'].forEach(function (name) {
+            var el = document.querySelector('[name="' + name + '"]');
+            if (el) params.set(name, el.value);
+        });
+        window.location.href = '/scanner.php?' + params.toString();
+    });
+    </script>
 
 </body>
 </html>
