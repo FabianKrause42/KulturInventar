@@ -1,4 +1,4 @@
-name: Deploy to STRATO (FTP)
+name: Deploy to STRATO (SFTP)
 
 on:
   push:
@@ -16,15 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.STRATO_SFTP_HOST }}
-          username: ${{ secrets.STRATO_SFTP_USER }}
-          password: ${{ secrets.STRATO_SFTP_PASS }}
-          local-dir: ./public/
-          server-dir: ${{ secrets.STRATO_FTP_PATH }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+
+      - name: Deploy via SFTP
+        run: |
+          lftp -u "${{ secrets.STRATO_SFTP_USER }}","${{ secrets.STRATO_SFTP_PASS }}" \
+               -e "set sftp:auto-confirm yes; mirror -R --parallel=4 ./public/ ${{ secrets.STRATO_SFTP_PATH }}; bye" \
+               sftp://${{ secrets.STRATO_SFTP_HOST }}
