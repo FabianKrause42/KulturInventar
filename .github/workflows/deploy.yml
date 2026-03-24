@@ -8,6 +8,9 @@ concurrency:
   group: deploy-strato
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,57 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install paramiko
-        run: pip install paramiko
-
-      - name: Deploy via SFTP
-        env:
-          SFTP_USER: ${{ secrets.STRATO_SFTP_USER }}
-          SFTP_PASS: ${{ secrets.STRATO_SFTP_PASS }}
-          SFTP_HOST: ${{ secrets.STRATO_SFTP_HOST }}
-          SFTP_PATH: ${{ secrets.STRATO_SFTP_PATH }}
+      - name: Prepare deploy structure
         run: |
-          python3 - << 'PYEOF'
-          import os, paramiko
+          mkdir -p _deploy
+          cp -r public/. _deploy/
 
-          host     = os.environ['SFTP_HOST']
-          user     = os.environ['SFTP_USER']
-          password = os.environ['SFTP_PASS']
-          remote_base = os.environ['SFTP_PATH'].rstrip('/')
-          local_base  = 'public'
-
-          transport = paramiko.Transport((host, 22))
-          transport.connect()
-          # Strato nutzt keyboard-interactive; Fallback auf password
-          try:
-              transport.auth_password(user, password)
-          except paramiko.AuthenticationException:
-              transport.auth_interactive(user, lambda t, i, fields: [password]*len(fields))
-
-          sftp = paramiko.SFTPClient.from_transport(transport)
-
-          def mkdir_p(path):
-              parts = [p for p in path.split('/') if p]
-              current = ''
-              for part in parts:
-                  current += '/' + part
-                  try:
-                      sftp.stat(current)
-                  except FileNotFoundError:
-                      sftp.mkdir(current)
-
-          uploaded = 0
-          for root, dirs, files in os.walk(local_base):
-              for filename in files:
-                  local_path  = os.path.join(root, filename)
-                  relative    = os.path.relpath(local_path, local_base).replace('\\', '/')
-                  remote_path = remote_base + '/' + relative
-                  mkdir_p('/'.join(remote_path.split('/')[:-1]))
-                  sftp.put(local_path, remote_path)
-                  print(f'  ✓ {relative}')
-                  uploaded += 1
-
-          print(f'\nFertig: {uploaded} Dateien hochgeladen.')
-          sftp.close()
-          transport.close()
-          PYEOF
+      - name: Upload via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.5
+        with:
+          username: ${{ secrets.STRATO_SFTP_USER }}
+          password: ${{ secrets.STRATO_SFTP_PASS }}
+          server: ${{ secrets.STRATO_SFTP_HOST }}
+          port: 22
+          local_path: "./_deploy/*"
+          remote_path: ${{ secrets.STRATO_SFTP_PATH }}
+          delete_remote_files: false
+          sftp_only: true
