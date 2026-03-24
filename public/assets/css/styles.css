@@ -147,10 +147,20 @@ button:active,
 
 .btn-save {
     background-color: var(--color-btn-save);
+    font-size: 1.25rem;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-back {
     background-color: var(--color-btn-back);
+    font-size: 1.25rem;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* =========================================
@@ -175,6 +185,13 @@ textarea {
     color: var(--color-text);
     -webkit-appearance: none;
     appearance: none;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231b1b1b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 2.5rem;
 }
 
 input:focus,
@@ -541,6 +558,35 @@ main > form {
 
 .form-row-large {
     flex: 1;
+}
+
+/* Menge-Feld mit "Menge:" Prefix */
+.menge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    padding: 0 0.9rem;
+    height: 48px;
+    box-sizing: border-box;
+}
+
+.menge-wrap .menge-label {
+    font-size: 1rem;
+    white-space: nowrap;
+    color: var(--color-text);
+    flex-shrink: 0;
+}
+
+.menge-wrap input[type="number"] {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100%;
+    min-width: 0;
+    background: transparent;
 }
 
 .form-header {

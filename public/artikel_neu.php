@@ -162,15 +162,16 @@ $f = [
 
                 <!-- Menge + Größe nebeneinander -->
                 <div class="form-row">
-                    <input
-                        type="number"
-                        name="menge"
-                        placeholder="Menge: 1"
-                        value="<?= htmlspecialchars($f['menge']) ?>"
-                        min="1"
-                        inputmode="numeric"
-                        class="form-row-small"
-                    >
+                    <div class="menge-wrap form-row-small">
+                        <span class="menge-label">Menge:</span>
+                        <input
+                            type="number"
+                            name="menge"
+                            value="<?= htmlspecialchars($f['menge']) ?>"
+                            min="1"
+                            inputmode="numeric"
+                        >
+                    </div>
                     <input
                         type="text"
                         name="masse"
