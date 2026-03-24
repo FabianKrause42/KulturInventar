@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/auth/session.php';
+require_once __DIR__ . '/../../src/auth/session.php';
 
 // Bereits eingeloggt → direkt weiterleiten
 if (is_logged_in()) {
-    header('Location: /index.php');
+    header('Location: ' . BASE_URL . '/index.php');
     exit;
 }
 
-require_once __DIR__ . '/../src/config/database.php';
+require_once __DIR__ . '/../../src/config/database.php';
 
 $fehler = '';
 
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id']   = $user_gefunden['id'];
                 $_SESSION['user_name'] = $user_gefunden['name'];
 
-                header('Location: /index.php');
+                header('Location: ' . BASE_URL . '/index.php');
                 exit;
             }
         } else {
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login – KulturInventar</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
 </head>
 <body class="login-body">
 
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <!-- Verstecktes Formular – wird per JS abgeschickt -->
-        <form method="post" action="/login.php" id="pin-form" style="display:none">
+        <form method="post" action="<?= BASE_URL ?>/login.php" id="pin-form" style="display:none">
             <input type="hidden" name="pin" id="pin-value">
         </form>
 
@@ -133,11 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="button" class="pin-key" data-digit="8">8</button>
             <button type="button" class="pin-key" data-digit="9">9</button>
             <button type="button" class="pin-key pin-key-delete" id="pin-delete" aria-label="Alles löschen">
-                <img src="/assets/img/icons/button_delete_red.png" alt="Löschen">
+                <img src="<?= BASE_URL ?>/assets/img/icons/button_delete_red.png" alt="Löschen">
             </button>
             <button type="button" class="pin-key" data-digit="0">0</button>
             <button type="button" class="pin-key pin-key-enter" id="pin-enter" aria-label="Bestätigen">
-                <img src="/assets/img/icons/button_enter_green.png" alt="Bestätigen">
+                <img src="<?= BASE_URL ?>/assets/img/icons/button_enter_green.png" alt="Bestätigen">
             </button>
         </div>
 

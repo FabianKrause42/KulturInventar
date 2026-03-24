@@ -10,6 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../config/app.php';
+
 function is_logged_in(): bool
 {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
@@ -25,7 +27,7 @@ function require_login(): void
     }
 
     if (!is_logged_in()) {
-        header('Location: /login.php');
+        header('Location: ' . BASE_URL . '/login.php');
         exit;
     }
 }

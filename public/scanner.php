@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/auth/session.php';
+require_once __DIR__ . '/../../src/auth/session.php';
 require_login();
 
 $context = $_GET['context'] ?? 'suche'; // 'suche' oder 'neu'
@@ -20,8 +20,8 @@ $felder = [
 $backParams = http_build_query(array_merge(['context' => $context], $felder));
 
 $backUrl = $context === 'neu'
-    ? '/artikel_neu.php?' . http_build_query($felder)
-    : '/index.php';
+    ? BASE_URL . '/artikel_neu.php?' . http_build_query($felder)
+    : BASE_URL . '/index.php';
 
 $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
 ?>
@@ -31,7 +31,7 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR-Code scannen</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <style>
         .scanner-wrap {
             display: flex;
@@ -128,7 +128,7 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
             <video id="video" playsinline autoplay muted></video>
             <canvas id="canvas"></canvas>
             <div class="scanner-placeholder" id="placeholder">
-                <img src="/assets/img/icons/camera.png" alt="">
+                <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="">
             </div>
             <div class="scanner-overlay">
                 <div class="scanner-frame"></div>
@@ -145,8 +145,9 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
 
     </main>
 
-    <script src="/assets/js/jsqr.min.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/jsqr.min.js"></script>
     <script>
+    var BASE_URL = '<?= BASE_URL ?>';
     (function () {
         var context   = <?= json_encode($context) ?>;
         var felder    = <?= json_encode($felder) ?>;
@@ -210,14 +211,14 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
                 // Nummer + alle bisherigen Felder zurück zu artikel_neu.php
                 var params = new URLSearchParams(felder);
                 params.set('inventarnummer', nummer);
-                window.location.href = '/artikel_neu.php?' + params.toString();
+                window.location.href = BASE_URL + '/artikel_neu.php?' + params.toString();
             } else {
                 // Inventarnummer in DB nachschlagen → artikel.php
-                fetch('/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
+                fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.id) {
-                            window.location.href = '/artikel.php?id=' + data.id;
+                            window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
                         } else {
                             status.textContent = 'Artikel ' + nummer + ' nicht gefunden.';
                             scanning = true;

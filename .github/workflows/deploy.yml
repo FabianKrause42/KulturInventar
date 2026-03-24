@@ -21,8 +21,8 @@ jobs:
 
       - name: Prepare deploy structure
         run: |
-          mkdir -p _deploy/html _deploy/src _deploy/database
-          cp -r public/. _deploy/html/
+          mkdir -p _deploy/html/kulturinventar _deploy/src _deploy/database
+          cp -r public/. _deploy/html/kulturinventar/
           cp -r src/. _deploy/src/
           cp -r database/. _deploy/database/
 

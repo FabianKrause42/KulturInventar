@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/auth/session.php';
+require_once __DIR__ . '/../../src/auth/session.php';
 require_login();
 
-require_once __DIR__ . '/../src/config/database.php';
+require_once __DIR__ . '/../../src/config/database.php';
 
 $fehler   = [];
 $erfolg   = false;
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $bemerkung ?: null,
         ]);
 
-        header('Location: /index.php');
+        header('Location: ' . BASE_URL . '/index.php');
         exit;
     }
 }
@@ -84,7 +84,7 @@ $f = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artikel anlegen – KulturInventar</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
 </head>
 <body>
 
@@ -98,7 +98,7 @@ $f = [
             </div>
         <?php endif; ?>
 
-        <form method="post" action="/artikel_neu.php" autocomplete="off" novalidate>
+        <form method="post" action="<?= BASE_URL ?>/artikel_neu.php" autocomplete="off" novalidate>
 
             <!-- ── Inventarnummer + QR ──────────────── -->
             <div class="form-header">
@@ -119,7 +119,7 @@ $f = [
                     id="btn-scan-neu"
                     aria-label="QR-Code scannen"
                 >
-                    <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
+                    <img src="<?= BASE_URL ?>/assets/img/icons/qr-code.png" width="30" height="30" alt="">
                 </button>
             </div>
 
@@ -180,7 +180,7 @@ $f = [
             <!-- ── Aktionen ──────────────────────────── -->
             <div class="form-actions">
                 <button type="submit" class="btn btn-save">Artikel speichern</button>
-                <a href="/index.php" class="btn btn-back">Zurück zur Suche</a>
+                <a href="<?= BASE_URL ?>/index.php" class="btn btn-back">Zurück zur Suche</a>
             </div>
 
         </form>
@@ -188,13 +188,14 @@ $f = [
     </main>
 
     <script>
+    var BASE_URL = '<?= BASE_URL ?>';
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
         ['bezeichnung','kategorie','standort','menge','masse','bemerkung'].forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
             if (el) params.set(name, el.value);
         });
-        window.location.href = '/scanner.php?' + params.toString();
+        window.location.href = BASE_URL + '/scanner.php?' + params.toString();
     });
     </script>
 

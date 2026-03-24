@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/auth/session.php';
+require_once __DIR__ . '/../../src/auth/session.php';
 require_login();
 ?>
 <!DOCTYPE html>
@@ -10,7 +10,7 @@ require_login();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KulturInventar</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
 </head>
 <body>
 
@@ -21,7 +21,7 @@ require_login();
             <div class="search-row">
                 <div class="search-field-wrap">
                     <span class="search-field-icon" aria-hidden="true">
-                        <img src="/assets/img/icons/search.png" width="20" height="20" alt="">
+                        <img src="<?= BASE_URL ?>/assets/img/icons/search.png" width="20" height="20" alt="">
                     </span>
                     <input
                         type="search"
@@ -38,7 +38,7 @@ require_login();
                     id="btn-scan-suche"
                     aria-label="QR-Code scannen"
                 >
-                    <img src="/assets/img/icons/qr-code.png" width="30" height="30" alt="">
+                    <img src="<?= BASE_URL ?>/assets/img/icons/qr-code.png" width="30" height="30" alt="">
                 </button>
             </div>
         </section>
@@ -52,12 +52,13 @@ require_login();
 
         <!-- ── Neuer Artikel ─────────────────────────── -->
         <div class="new-item-wrap">
-            <a href="/artikel_neu.php" class="btn">Neuen Artikel anlegen</a>
+            <a href="<?= BASE_URL ?>/artikel_neu.php" class="btn">Neuen Artikel anlegen</a>
         </div>
 
     </main>
 
     <script>
+    var BASE_URL = '<?= BASE_URL ?>';
     (function () {
         var input     = document.getElementById('q');
         var list      = document.getElementById('result-list');
@@ -99,7 +100,7 @@ require_login();
             if (loading) return;
             loading = true;
 
-            var url = '/api/search.php?q=' + encodeURIComponent(currentQuery) + '&offset=' + offset;
+            var url = BASE_URL + '/api/search.php?q=' + encodeURIComponent(currentQuery) + '&offset=' + offset;
 
             fetch(url)
                 .then(function (r) { return r.json(); })
@@ -127,7 +128,7 @@ require_login();
             results.forEach(function (item) {
                 var li = document.createElement('li');
                 li.innerHTML =
-                    '<a href="/artikel.php?id=' + item.id + '" class="result-row">' +
+                    '<a href="' + BASE_URL + '/artikel.php?id=' + item.id + '" class="result-row">' +
                         '<img class="result-thumb" src="' + escHtml(item.thumb) + '"' +
                             ' alt="' + escHtml(item.bezeichnung) + '"' +
                             ' loading="lazy" width="100" height="95">' +
@@ -164,7 +165,7 @@ require_login();
 
     <script>
     document.getElementById('btn-scan-suche').addEventListener('click', function () {
-        window.location.href = '/scanner.php?context=suche';
+        window.location.href = BASE_URL + '/scanner.php?context=suche';
     });
     </script>
 
