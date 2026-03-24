@@ -79,25 +79,27 @@ $gespeichert = isset($_GET['gespeichert']);
         }
 
         .detail-hero {
-            width: 100%;
+            width: calc(100% + 2 * var(--spacing));
+            margin-left: calc(-1 * var(--spacing));
+            margin-right: calc(-1 * var(--spacing));
             aspect-ratio: 16 / 7;
             background: #eeeeee;
-            border-radius: var(--radius);
+            border-radius: 0 0 var(--radius) var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .detail-hero img {
-            width: 32px;
-            height: 32px;
-            opacity: 0.35;
+            width: 28px;
+            height: 28px;
+            opacity: 0.4;
         }
 
         .detail-nummer {
             font-size: 1rem;
             color: var(--color-text);
-            text-align: center;
+            text-align: left;
         }
 
         .detail-actions {
@@ -106,13 +108,20 @@ $gespeichert = isset($_GET['gespeichert']);
             bottom: 0;
             background: var(--color-bg);
             padding-top: var(--spacing);
+            padding-bottom: var(--spacing);
+            border-top: 1px solid var(--color-divider);
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 0.57rem;
         }
 
         .btn-standort {
-            background: var(--color-btn-save);
+            background: var(--color-btn-standort);
+            font-size: 1.25rem;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .success-msg {
@@ -196,21 +205,25 @@ $gespeichert = isset($_GET['gespeichert']);
                 <?php endforeach; ?>
             </select>
 
-            <input
-                type="number"
-                name="menge"
-                placeholder="Menge"
-                value="<?= (int) $artikel['menge'] ?>"
-                min="1"
-                inputmode="numeric"
-            >
-
-            <input
-                type="text"
-                name="masse"
-                placeholder="Maße"
-                value="<?= htmlspecialchars($artikel['masse'] ?? '') ?>"
-            >
+            <div class="form-row">
+                <div class="menge-wrap form-row-small">
+                    <span class="menge-label">Menge:</span>
+                    <input
+                        type="number"
+                        name="menge"
+                        value="<?= (int) $artikel['menge'] ?>"
+                        min="1"
+                        inputmode="numeric"
+                    >
+                </div>
+                <input
+                    type="text"
+                    name="masse"
+                    placeholder="Maße"
+                    value="<?= htmlspecialchars($artikel['masse'] ?? '') ?>"
+                    class="form-row-large"
+                >
+            </div>
 
             <textarea
                 name="bemerkung"
