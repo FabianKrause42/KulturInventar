@@ -508,6 +508,41 @@ main > form {
     min-height: 0;
 }
 
+.form-image-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    background: #d5d5d5;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    color: var(--color-text);
+    font-size: 1.125rem;
+    margin-bottom: var(--spacing);
+}
+
+.form-image-icon {
+    width: 28px;
+    height: 28px;
+    opacity: 0.5;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.form-row-small {
+    flex: 0 0 38%;
+}
+
+.form-row-large {
+    flex: 1;
+}
+
 .form-header {
     display: flex;
     gap: 0.5rem;

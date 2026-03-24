@@ -100,6 +100,12 @@ $f = [
 
         <form method="post" action="<?= BASE_URL ?>/artikel_neu.php" autocomplete="off" novalidate>
 
+            <!-- ── Vorschaubild ──────────────────────── -->
+            <div class="form-image-placeholder">
+                <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="" class="form-image-icon">
+                <span>Bild hinzufügen</span>
+            </div>
+
             <!-- ── Inventarnummer + QR ──────────────── -->
             <div class="form-header">
                 <input
@@ -154,21 +160,25 @@ $f = [
                     <?php endforeach; ?>
                 </select>
 
-                <input
-                    type="number"
-                    name="menge"
-                    placeholder="Menge"
-                    value="<?= htmlspecialchars($f['menge']) ?>"
-                    min="1"
-                    inputmode="numeric"
-                >
-
-                <input
-                    type="text"
-                    name="masse"
-                    placeholder="Maße"
-                    value="<?= htmlspecialchars($f['masse']) ?>"
-                >
+                <!-- Menge + Größe nebeneinander -->
+                <div class="form-row">
+                    <input
+                        type="number"
+                        name="menge"
+                        placeholder="Menge: 1"
+                        value="<?= htmlspecialchars($f['menge']) ?>"
+                        min="1"
+                        inputmode="numeric"
+                        class="form-row-small"
+                    >
+                    <input
+                        type="text"
+                        name="masse"
+                        placeholder="Größe"
+                        value="<?= htmlspecialchars($f['masse']) ?>"
+                        class="form-row-large"
+                    >
+                </div>
 
                 <textarea
                     name="bemerkung"
