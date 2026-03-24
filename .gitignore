@@ -2,6 +2,7 @@
 db_login.txt
 stp_uplaod.txt
 src/config/config.local.php
+public/src/config/config.local.php
 .env
 .env.*
 
