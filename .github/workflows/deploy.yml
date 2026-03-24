@@ -21,8 +21,7 @@ jobs:
 
       - name: Prepare deploy structure
         run: |
-          mkdir -p _deploy/html/kulturinventar
-          cp -r public/. _deploy/html/kulturinventar/
+          cp -r public/. _deploy/
 
       - name: Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
