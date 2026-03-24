@@ -27,7 +27,9 @@ function require_login(): void
     }
 
     if (!is_logged_in()) {
-        header('Location: ' . BASE_URL . '/login.php');
+        $current = $_SERVER['REQUEST_URI'] ?? '';
+        $redirect = $current !== '' ? '?redirect=' . urlencode($current) : '';
+        header('Location: ' . BASE_URL . '/login.php' . $redirect);
         exit;
     }
 }

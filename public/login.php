@@ -5,7 +5,9 @@ require_once __DIR__ . '/src/auth/session.php';
 
 // Bereits eingeloggt → direkt weiterleiten
 if (is_logged_in()) {
-    header('Location: ' . BASE_URL . '/index.php');
+    $redirect = $_GET['redirect'] ?? '';
+    $target = ($redirect !== '' && str_starts_with($redirect, '/')) ? $redirect : BASE_URL . '/index.php';
+    header('Location: ' . $target);
     exit;
 }
 
@@ -58,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id']   = $user_gefunden['id'];
                 $_SESSION['user_name'] = $user_gefunden['name'];
 
-                header('Location: ' . BASE_URL . '/index.php');
+                $redirect = $_POST['redirect'] ?? $_GET['redirect'] ?? '';
+                $target = ($redirect !== '' && str_starts_with($redirect, '/')) ? $redirect : BASE_URL . '/index.php';
+                header('Location: ' . $target);
                 exit;
             }
         } else {
@@ -111,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Verstecktes Formular – wird per JS abgeschickt -->
         <form method="post" action="<?= BASE_URL ?>/login.php" id="pin-form" style="display:none">
             <input type="hidden" name="pin" id="pin-value">
+            <input type="hidden" name="redirect" value="<?= htmlspecialchars($_GET['redirect'] ?? '') ?>">
         </form>
 
         <!-- PIN-Anzeige -->
