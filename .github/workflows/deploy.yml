@@ -21,6 +21,7 @@ jobs:
 
       - name: Prepare deploy structure
         run: |
+          mkdir -p _deploy
           cp -r public/. _deploy/
 
       - name: Upload via SFTP
