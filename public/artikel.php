@@ -11,12 +11,57 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 $artikel = null;
 if ($id > 0 && $pdo !== null) {
-    $stmt = $pdo->prepare(
-        'SELECT * FROM inventar WHERE id = ? LIMIT 1'
-    );
+    $stmt = $pdo->prepare('SELECT * FROM inventar WHERE id = ? LIMIT 1');
     $stmt->execute([$id]);
     $artikel = $stmt->fetch() ?: null;
 }
+
+$kategorien = ['Audio', 'Licht', 'Video', 'IT', 'Bühne', 'Möbel', 'Kabel', 'Werkzeug', 'Sonstiges'];
+$standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
+
+$fehler  = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null) {
+    $bezeichnung = trim($_POST['bezeichnung'] ?? '');
+    $kategorie   = trim($_POST['kategorie']   ?? '');
+    $standort    = trim($_POST['standort']    ?? '');
+    $menge       = (int) ($_POST['menge']     ?? 1);
+    $masse       = trim($_POST['masse']       ?? '');
+    $bemerkung   = trim($_POST['bemerkung']   ?? '');
+
+    if ($bezeichnung === '') $fehler[] = 'Bezeichnung ist Pflicht.';
+    if (!in_array($kategorie, $kategorien, true)) $fehler[] = 'Ungültige Kategorie.';
+    if ($menge < 1) $menge = 1;
+
+    if (empty($fehler)) {
+        $pdo->prepare(
+            'UPDATE inventar
+             SET bezeichnung=?, kategorie=?, standort=?, menge=?, masse=?, bemerkung=?
+             WHERE id=?'
+        )->execute([
+            $bezeichnung,
+            $kategorie,
+            $standort ?: null,
+            $menge,
+            $masse     ?: null,
+            $bemerkung ?: null,
+            $id,
+        ]);
+
+        header('Location: ' . BASE_URL . '/artikel.php?id=' . $id . '&gespeichert=1');
+        exit;
+    }
+
+    // Fehler: Formularwerte aus POST übernehmen
+    $artikel['bezeichnung'] = $bezeichnung;
+    $artikel['kategorie']   = $kategorie;
+    $artikel['standort']    = $standort;
+    $artikel['menge']       = $menge;
+    $artikel['masse']       = $masse;
+    $artikel['bemerkung']   = $bemerkung;
+}
+
+$gespeichert = isset($_GET['gespeichert']);
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -33,60 +78,26 @@ if ($id > 0 && $pdo !== null) {
             gap: var(--spacing);
         }
 
-        .detail-img {
+        .detail-hero {
             width: 100%;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
+            aspect-ratio: 16 / 7;
+            background: #eeeeee;
             border-radius: var(--radius);
-            background: #d9d9d9;
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-hero img {
+            width: 32px;
+            height: 32px;
+            opacity: 0.35;
         }
 
         .detail-nummer {
-            font-size: 0.85rem;
-            color: #666;
-            font-weight: 500;
-            letter-spacing: 0.04em;
-        }
-
-        .detail-bezeichnung {
-            font-size: 1.375rem;
-            font-weight: 600;
-            color: var(--color-text);
-            margin: 0;
-        }
-
-        .detail-table {
-            width: 100%;
-            border-collapse: collapse;
             font-size: 1rem;
-        }
-
-        .detail-table tr {
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .detail-table tr:last-child {
-            border-bottom: none;
-        }
-
-        .detail-table th {
-            text-align: left;
-            font-weight: 500;
-            color: #666;
-            padding: 0.6rem 0.5rem 0.6rem 0;
-            width: 40%;
-            vertical-align: top;
-        }
-
-        .detail-table td {
-            padding: 0.6rem 0 0.6rem 0.5rem;
             color: var(--color-text);
-            vertical-align: top;
-        }
-
-        .detail-bemerkung {
-            white-space: pre-wrap;
+            text-align: center;
         }
 
         .detail-actions {
@@ -94,7 +105,21 @@ if ($id > 0 && $pdo !== null) {
             position: sticky;
             bottom: 0;
             background: var(--color-bg);
-            padding: var(--spacing) 0 0;
+            padding-top: var(--spacing);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .btn-standort {
+            background: var(--color-btn-save);
+        }
+
+        .success-msg {
+            font-size: 0.9rem;
+            color: #2a7d2e;
+            text-align: center;
+            padding: 0.4rem 0;
         }
 
         .not-found {
@@ -105,66 +130,140 @@ if ($id > 0 && $pdo !== null) {
     </style>
 </head>
 <body>
-    <main class="detail-wrap">
+<main class="detail-wrap">
 
-        <?php if ($artikel === null): ?>
+<?php if ($artikel === null): ?>
 
-            <p class="not-found">
-                <?= $id === 0 ? 'Keine Artikel-ID angegeben.' : 'Artikel nicht gefunden.' ?>
-            </p>
+    <p class="not-found">
+        <?= $id === 0 ? 'Keine Artikel-ID angegeben.' : 'Artikel nicht gefunden.' ?>
+    </p>
+    <div class="detail-actions">
+        <a href="<?= BASE_URL ?>/index.php" class="btn btn-back">Zurück zur Suche</a>
+    </div>
 
-        <?php else: ?>
+<?php else: ?>
 
-            <img
-                class="detail-img"
-                src="<?= get_thumbnail($artikel) ?>"
-                alt="<?= htmlspecialchars($artikel['bezeichnung']) ?>"
+    <?php if (!empty($fehler)): ?>
+        <div class="error-message">
+            <?php foreach ($fehler as $msg): ?>
+                <p><?= htmlspecialchars($msg) ?></p>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($gespeichert): ?>
+        <p class="success-msg">✓ Änderung gespeichert</p>
+    <?php endif; ?>
+
+    <!-- Vorschaubild -->
+    <div class="detail-hero">
+        <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="">
+    </div>
+
+    <!-- Inventarnummer -->
+    <p class="detail-nummer">Inventarnummer: <?= htmlspecialchars($artikel['inventarnummer']) ?></p>
+
+    <!-- Formular -->
+    <form method="post" action="<?= BASE_URL ?>/artikel.php?id=<?= $id ?>" id="edit-form" autocomplete="off" novalidate>
+
+        <div class="form-fields">
+
+            <input
+                type="text"
+                name="bezeichnung"
+                placeholder="Bezeichnung"
+                value="<?= htmlspecialchars($artikel['bezeichnung']) ?>"
+                required
             >
 
-            <div>
-                <p class="detail-nummer">#<?= htmlspecialchars($artikel['inventarnummer']) ?></p>
-                <h1 class="detail-bezeichnung"><?= htmlspecialchars($artikel['bezeichnung']) ?></h1>
-            </div>
+            <select name="kategorie">
+                <option value="" disabled>Kategorie</option>
+                <?php foreach ($kategorien as $kat): ?>
+                    <option value="<?= htmlspecialchars($kat) ?>"
+                        <?= $artikel['kategorie'] === $kat ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($kat) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
-            <table class="detail-table">
-                <tr>
-                    <th>Kategorie</th>
-                    <td><?= htmlspecialchars($artikel['kategorie']) ?></td>
-                </tr>
-                <?php if (!empty($artikel['standort'])): ?>
-                <tr>
-                    <th>Standort</th>
-                    <td><?= htmlspecialchars($artikel['standort']) ?></td>
-                </tr>
-                <?php endif; ?>
-                <tr>
-                    <th>Menge</th>
-                    <td><?= (int) $artikel['menge'] ?></td>
-                </tr>
-                <?php if (!empty($artikel['masse'])): ?>
-                <tr>
-                    <th>Maße</th>
-                    <td><?= htmlspecialchars($artikel['masse']) ?></td>
-                </tr>
-                <?php endif; ?>
-                <?php if (!empty($artikel['bemerkung'])): ?>
-                <tr>
-                    <th>Bemerkung</th>
-                    <td class="detail-bemerkung"><?= htmlspecialchars($artikel['bemerkung']) ?></td>
-                </tr>
-                <?php endif; ?>
-                <tr>
-                    <th>Angelegt</th>
-                    <td><?= (new DateTime($artikel['erstellt_am']))->format('d.m.Y') ?></td>
-                </tr>
-            </table>
+            <select name="standort">
+                <option value="">Standort</option>
+                <?php foreach ($standorte as $ort): ?>
+                    <option value="<?= htmlspecialchars($ort) ?>"
+                        <?= ($artikel['standort'] ?? '') === $ort ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($ort) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
-        <?php endif; ?>
+            <input
+                type="number"
+                name="menge"
+                placeholder="Menge"
+                value="<?= (int) $artikel['menge'] ?>"
+                min="1"
+                inputmode="numeric"
+            >
+
+            <input
+                type="text"
+                name="masse"
+                placeholder="Maße"
+                value="<?= htmlspecialchars($artikel['masse'] ?? '') ?>"
+            >
+
+            <textarea
+                name="bemerkung"
+                placeholder="Bemerkung"
+            ><?= htmlspecialchars($artikel['bemerkung'] ?? '') ?></textarea>
+
+        </div>
 
         <div class="detail-actions">
+            <button
+                type="button"
+                id="btn-primary"
+                class="btn btn-standort"
+                data-standort-url="<?= BASE_URL ?>/standort.php?id=<?= $id ?>"
+            >Standort ändern</button>
             <a href="<?= BASE_URL ?>/index.php" class="btn btn-back">Zurück zur Suche</a>
         </div>
 
-    </main>
+    </form>
+
+<?php endif; ?>
+
+</main>
+
+<script>
+(function () {
+    var form = document.getElementById('edit-form');
+    var btn  = document.getElementById('btn-primary');
+    if (!form || !btn) return;
+
+    var standortUrl = btn.dataset.standortUrl;
+    var changed = false;
+
+    function setChanged() {
+        if (changed) return;
+        changed = true;
+        btn.textContent = 'Änderung speichern';
+        btn.type = 'submit';
+    }
+
+    form.querySelectorAll('input, select, textarea').forEach(function (el) {
+        el.addEventListener('change', setChanged);
+        el.addEventListener('input',  setChanged);
+    });
+
+    btn.addEventListener('click', function () {
+        if (!changed) {
+            window.location.href = standortUrl;
+        }
+        // changed=true → type=submit → Browser schickt das Formular
+    });
+}());
+</script>
+
 </body>
 </html>
