@@ -1,4 +1,4 @@
-# Direkten Browser-Zugriff auf PHP-Logik und Konfiguration verbieten
+# Direkten Browser-Zugriff blockieren
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>
