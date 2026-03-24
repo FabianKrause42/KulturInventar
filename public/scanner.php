@@ -193,11 +193,13 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
 
                 if (code) {
                     var data = code.data.trim();
-                    // Prüfen ob 4-stellige Nummer
-                    if (/^\d{4}$/.test(data)) {
+                    // Letzte 4 Zeichen extrahieren und prüfen ob vierstellige Zahl
+                    // → funktioniert mit reiner "0001" UND mit URLs wie "...?ID=0001"
+                    var last4 = data.slice(-4);
+                    if (/^\d{4}$/.test(last4)) {
                         scanning = false;
-                        status.textContent = 'Erkannt: ' + data;
-                        handleResult(data);
+                        status.textContent = 'Erkannt: ' + last4;
+                        handleResult(last4);
                         return;
                     }
                 }
