@@ -1,4 +1,4 @@
-name: Deploy to STRATO (SFTP)
+name: Deploy to STRATO (FTP)
 
 on:
   push:
@@ -8,9 +8,6 @@ concurrency:
   group: deploy-strato
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,14 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.5
+      - name: Upload via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
+          server: ${{ secrets.STRATO_SFTP_HOST }}
           username: ${{ secrets.STRATO_SFTP_USER }}
           password: ${{ secrets.STRATO_SFTP_PASS }}
-          server: ${{ secrets.STRATO_SFTP_HOST }}
-          port: 22
-          local_path: "./public/*"
-          remote_path: ${{ secrets.STRATO_SFTP_PATH }}
-          delete_remote_files: false
-          sftp_only: true
+          local-dir: ./public/
+          server-dir: ${{ secrets.STRATO_FTP_PATH }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
