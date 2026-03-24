@@ -176,7 +176,7 @@ select,
 textarea {
     display: block;
     width: 100%;
-    padding: 0.75rem 0.9rem;
+    padding: 0.71rem 0.9rem;
     font-family: inherit;
     font-size: 1rem;
     border: var(--border);
@@ -617,7 +617,8 @@ main > form {
 .form-fields {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.57rem;
+    flex: 1;
 }
 
 .form-actions {
