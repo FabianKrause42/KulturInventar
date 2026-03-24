@@ -19,11 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare deploy structure
-        run: |
-          mkdir -p _deploy
-          cp -r public/. _deploy/
-
       - name: Upload via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.5
         with:
@@ -31,7 +26,7 @@ jobs:
           password: ${{ secrets.STRATO_SFTP_PASS }}
           server: ${{ secrets.STRATO_SFTP_HOST }}
           port: 22
-          local_path: "./_deploy/*"
+          local_path: "./public"
           remote_path: ${{ secrets.STRATO_SFTP_PATH }}
           delete_remote_files: false
           sftp_only: true
