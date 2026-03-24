@@ -19,8 +19,21 @@ jobs:
       - name: Install lftp
         run: sudo apt-get install -y lftp
 
-      - name: Deploy via SFTP
+      - name: Setup SSH key
         run: |
-          lftp -u "${{ secrets.STRATO_SFTP_USER }}","${{ secrets.STRATO_SFTP_PASS }}" \
-               -e "set sftp:auto-confirm yes; mirror -R --parallel=4 ./public/ ${{ secrets.STRATO_SFTP_PATH }}; bye" \
-               sftp://${{ secrets.STRATO_SFTP_HOST }}
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "${{ secrets.STRATO_SSH_KEY }}" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+
+      - name: Deploy via SFTP
+        env:
+          SFTP_USER: ${{ secrets.STRATO_SFTP_USER }}
+          SFTP_HOST: ${{ secrets.STRATO_SFTP_HOST }}
+          SFTP_PATH: ${{ secrets.STRATO_SFTP_PATH }}
+        run: |
+          KEY="$HOME/.ssh/deploy_key"
+          lftp -u "$SFTP_USER" \
+               -e "set sftp:connect-program 'ssh -i $KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'; \
+                   mirror -R --parallel=4 ./public/ $SFTP_PATH; \
+                   bye" \
+               "sftp://$SFTP_HOST"
