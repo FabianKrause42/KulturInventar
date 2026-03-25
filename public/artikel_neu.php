@@ -14,6 +14,9 @@ $kategorien = ['Audio', 'Licht', 'Video', 'IT', 'Bühne', 'Möbel', 'Kabel', 'We
 $standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+              strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
     $inventarnummer = trim($_POST['inventarnummer'] ?? '');
     $bezeichnung    = trim($_POST['bezeichnung']    ?? '');
     $kategorie      = trim($_POST['kategorie']      ?? '');
@@ -73,7 +76,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['redirect' => BASE_URL . '/artikel.php?id=' . $newId . '&neu=1']);
+            exit;
+        }
+
         header('Location: ' . BASE_URL . '/artikel.php?id=' . $newId . '&neu=1');
+        exit;
+    }
+
+    if ($isAjax && !empty($fehler)) {
+        header('Content-Type: application/json');
+        http_response_code(422);
+        echo json_encode(['errors' => $fehler]);
         exit;
     }
 }
@@ -96,6 +112,7 @@ $f = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artikel anlegen – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
+    <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>
 </head>
 <body>
 
@@ -116,7 +133,7 @@ $f = [
                 <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="" class="form-image-icon" id="bild-preview-icon">
                 <span id="bild-preview-text">Bild hinzufügen</span>
             </label>
-            <input type="file" name="bild" id="bild-input" accept="image/*" capture="environment" style="display:none">
+            <input type="file" name="bild" id="bild-input" accept="image/*" style="display:none">
 
             <!-- ── Inventarnummer + QR ──────────────── -->
             <div class="form-header">
@@ -213,20 +230,42 @@ $f = [
     <script>
     var BASE_URL = '<?= BASE_URL ?>';
 
-    // Bildvorschau beim Auswählen
+    var croppedFile = null;
+
+    // Bildvorschau mit Crop-Overlay
     document.getElementById('bild-input').addEventListener('change', function () {
         var file = this.files[0];
         if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
+
+        zeigeCropOverlay(file, function (cf, previewUrl) {
+            croppedFile = cf;
             var wrap = document.getElementById('bild-preview-wrap');
-            wrap.style.backgroundImage   = 'url(' + e.target.result + ')';
-            wrap.style.backgroundSize    = 'cover';
+            wrap.style.backgroundImage    = 'url(' + previewUrl + ')';
+            wrap.style.backgroundSize     = 'cover';
             wrap.style.backgroundPosition = 'center';
             document.getElementById('bild-preview-icon').style.display = 'none';
             document.getElementById('bild-preview-text').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
+        });
+    });
+
+    // Formular-Submit: bei gecroptem Bild via AJAX senden
+    document.querySelector('form').addEventListener('submit', function (e) {
+        if (!croppedFile) return; // kein Bild → normaler Submit
+        e.preventDefault();
+        var fd = new FormData(this);
+        fd.delete('bild');
+        fd.append('bild', croppedFile, 'bild.jpg');
+        fetch(BASE_URL + '/artikel_neu.php', {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.redirect) { window.location.href = data.redirect; }
+            else if (data.errors) { alert(data.errors.join('\n')); }
+        })
+        .catch(function () { alert('Fehler beim Senden.'); });
     });
 
     document.getElementById('btn-scan-neu').addEventListener('click', function () {

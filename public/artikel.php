@@ -152,6 +152,7 @@ if ($id > 0 && $pdo !== null) {
             padding: 2rem 0;
         }
     </style>
+    <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>
 </head>
 <body>
 <main class="detail-wrap">
@@ -193,7 +194,7 @@ if ($id > 0 && $pdo !== null) {
         <?php endif; ?>
         <div id="hero-uploading" style="display:none;color:#555;font-size:0.9rem">Wird hochgeladen…</div>
     </div>
-    <input type="file" id="bild-input" accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="bild-input" accept="image/*" style="display:none">
 
     <!-- Inventarnummer -->
     <p class="detail-nummer">Inventarnummer: <?= htmlspecialchars($artikel['inventarnummer']) ?></p>
@@ -280,48 +281,49 @@ if ($id > 0 && $pdo !== null) {
     var INVENTAR_ID = <?= $id ?>;
 
     // ── Bild Upload ──────────────────────────────────────────
-    var hero        = document.getElementById('hero-upload');
-    var bildInput   = document.getElementById('bild-input');
-    var uploading   = document.getElementById('hero-uploading');
+    var hero      = document.getElementById('hero-upload');
+    var bildInput = document.getElementById('bild-input');
+    var hatBild   = <?= $ersteBild ? 'true' : 'false' ?>;
 
     hero.style.cursor = 'pointer';
     hero.addEventListener('click', function () {
-        bildInput.click();
+        if (hatBild) {
+            window.location.href = BASE_URL + '/bild.php?id=' + INVENTAR_ID;
+        } else {
+            bildInput.click();
+        }
     });
 
     bildInput.addEventListener('change', function () {
         var file = this.files[0];
         if (!file) return;
 
-        // Optimistische Vorschau sofort zeigen
-        var reader = new FileReader();
-        reader.onload = function (e) {
+        zeigeCropOverlay(file, function (croppedFile, previewUrl) {
             hero.innerHTML =
-                '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block" alt="">' +
+                '<img src="' + previewUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block" alt="">' +
                 '<div id="hero-uploading" style="position:absolute;bottom:6px;right:8px;font-size:0.75rem;color:#555;background:rgba(255,255,255,0.8);padding:2px 6px;border-radius:4px">Speichert\u2026</div>';
             hero.style.position = 'relative';
-        };
-        reader.readAsDataURL(file);
+            hatBild = true;
 
-        // Upload zum Server
-        var fd = new FormData();
-        fd.append('bild', file);
-        fd.append('inventar_id', INVENTAR_ID);
+            var fd = new FormData();
+            fd.append('bild', croppedFile);
+            fd.append('inventar_id', INVENTAR_ID);
 
-        fetch(BASE_URL + '/api/upload.php', { method: 'POST', body: fd })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                var overlay = document.getElementById('hero-uploading');
-                if (data.success) {
-                    if (overlay) overlay.remove();
-                } else {
-                    if (overlay) overlay.textContent = data.error || 'Fehler beim Upload';
-                }
-            })
-            .catch(function () {
-                var overlay = document.getElementById('hero-uploading');
-                if (overlay) overlay.textContent = 'Upload fehlgeschlagen';
-            });
+            fetch(BASE_URL + '/api/upload.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var overlay = document.getElementById('hero-uploading');
+                    if (data.success) {
+                        if (overlay) overlay.remove();
+                    } else {
+                        if (overlay) overlay.textContent = data.error || 'Fehler beim Upload';
+                    }
+                })
+                .catch(function () {
+                    var overlay = document.getElementById('hero-uploading');
+                    if (overlay) overlay.textContent = 'Upload fehlgeschlagen';
+                });
+        });
     });
 
     // ── Formular-Änderungs-Detektion ────────────────────────
