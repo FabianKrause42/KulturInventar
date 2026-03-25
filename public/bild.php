@@ -187,10 +187,10 @@ $ersteBild = $bilder[0];
     if (img.complete && img.naturalWidth) initView();
 
     /* ── Touch-Events ────────────────────────────────── */
-    var t1x = 0, t1y = 0;          // letzter 1-Finger-Touchpos
+    var t1x = 0, t1y = 0;
     var pinchDist0 = 0, pinchSc0 = 1;
-    var pinchMidX = 0, pinchMidY = 0;
     var mode = 'idle'; // 'pan' | 'pinch'
+    var lastPinchEnd = 0; // Zeitstempel letztes Pinch-Ende (blockiert Double-Tap)
 
     function touchMid(touches) {
         return {
@@ -215,14 +215,10 @@ $ersteBild = $bilder[0];
             mode = 'pan';
             t1x  = e.touches[0].clientX;
             t1y  = e.touches[0].clientY;
-        } else if (e.touches.length === 2) {
+        } else if (e.touches.length >= 2) {
             mode       = 'pinch';
             pinchDist0 = touchDist(e.touches);
-            pinchSc0   = sc;
-            var mid    = touchMid(e.touches);
-            var r      = container.getBoundingClientRect();
-            pinchMidX  = mid.x - r.left;
-            pinchMidY  = mid.y - r.top;
+            pinchSc0   = sc; // aktuellen Zoom merken
         }
     }, { passive: false });
 
@@ -249,33 +245,41 @@ $ersteBild = $bilder[0];
     }, { passive: false });
 
     container.addEventListener('touchend', function (e) {
-        if (e.touches.length === 0) mode = 'idle';
-        else if (e.touches.length === 1) {
-            // Finger losgelassen beim Pinch → zurück zu Pan
+        if (e.touches.length === 0) {
+            if (mode === 'pinch') lastPinchEnd = Date.now();
+            mode = 'idle';
+        } else if (e.touches.length === 1) {
+            if (mode === 'pinch') lastPinchEnd = Date.now();
             mode = 'pan';
             t1x  = e.touches[0].clientX;
             t1y  = e.touches[0].clientY;
         }
     });
 
-    /* Doppeltipp: zoom auf 2x / zurück zu fit */
+    /* Doppeltipp: zoom auf 2.5x / zurück zu fit */
     var lastTap = 0;
     container.addEventListener('touchend', function (e) {
         if (e.changedTouches.length !== 1) return;
         var now = Date.now();
+        // Nach einem Pinch 400 ms ignorieren damit die Finger-Release-Events
+        // nicht fälschlich als Double-Tap gewertet werden
+        if (now - lastPinchEnd < 400) { lastTap = 0; return; }
         if (now - lastTap < 300) {
             var r   = container.getBoundingClientRect();
             var px  = e.changedTouches[0].clientX - r.left;
             var py  = e.changedTouches[0].clientY - r.top;
             if (sc > fitSc * 1.2) {
-                // Zurück zu fit
-                sc = fitSc; tx = (container.clientWidth - imgW()) / 2;
-                ty = (container.clientHeight - imgH()) / 2; apply();
+                sc = fitSc;
+                tx = (container.clientWidth  - imgW()) / 2;
+                ty = (container.clientHeight - imgH()) / 2;
+                apply();
             } else {
                 zoomAt(px, py, fitSc * 2.5);
             }
+            lastTap = 0; // nach Double-Tap zurücksetzen
+        } else {
+            lastTap = now;
         }
-        lastTap = now;
     });
 
     /* ── Maus (Desktop) ────────────────────────────────── */
