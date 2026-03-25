@@ -231,24 +231,61 @@ $f = [
     var BASE_URL = '<?= BASE_URL ?>';
 
     var croppedFile = null;
+    var STORAGE_KEY = 'artikel_neu_bild';
 
-    // Bildvorschau mit Crop-Overlay
+    /* ── Hilfsfunktionen ──────────────────────────────── */
+    function setPreviewImage(dataUrl) {
+        var wrap = document.getElementById('bild-preview-wrap');
+        wrap.style.backgroundImage    = 'url(' + dataUrl + ')';
+        wrap.style.backgroundSize     = 'cover';
+        wrap.style.backgroundPosition = 'center';
+        document.getElementById('bild-preview-icon').style.display = 'none';
+        document.getElementById('bild-preview-text').style.display = 'none';
+    }
+
+    function dataUrlToFile(dataUrl, name) {
+        var parts = dataUrl.split(',');
+        var mime  = parts[0].match(/:(.*?);/)[1];
+        var raw   = atob(parts[1]);
+        var arr   = new Uint8Array(raw.length);
+        for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+        return new File([arr], name, { type: mime });
+    }
+
+    /* ── Beim Laden: Bild aus sessionStorage wiederherstellen (nach Scanner-Rücksprung) ── */
+    (function () {
+        var fromScanner = (new URLSearchParams(window.location.search)).get('context') === 'neu';
+        if (!fromScanner) {
+            // Frischer Aufruf – altes gespeichertes Bild löschen
+            sessionStorage.removeItem(STORAGE_KEY);
+            return;
+        }
+        var stored = sessionStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            setPreviewImage(stored);
+            croppedFile = dataUrlToFile(stored, 'bild.jpg');
+        }
+    }());
+
+    /* ── Bildauswahl mit Crop-Overlay ──────────────────────── */
     document.getElementById('bild-input').addEventListener('change', function () {
         var file = this.files[0];
         if (!file) return;
 
-        zeigeCropOverlay(file, function (cf, previewUrl) {
+        zeigeCropOverlay(file, function (cf) {
             croppedFile = cf;
-            var wrap = document.getElementById('bild-preview-wrap');
-            wrap.style.backgroundImage    = 'url(' + previewUrl + ')';
-            wrap.style.backgroundSize     = 'cover';
-            wrap.style.backgroundPosition = 'center';
-            document.getElementById('bild-preview-icon').style.display = 'none';
-            document.getElementById('bild-preview-text').style.display = 'none';
+            // Als DataURL im sessionStorage sichern (überlebt Seitenwechsel zum Scanner)
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var dataUrl = e.target.result;
+                try { sessionStorage.setItem(STORAGE_KEY, dataUrl); } catch (ex) { /* quota überschritten */ }
+                setPreviewImage(dataUrl);
+            };
+            reader.readAsDataURL(cf);
         });
     });
 
-    // Formular-Submit: bei gecroptem Bild via AJAX senden
+    /* ── Formular-Submit: gecroptes Bild via AJAX senden ─────── */
     document.querySelector('form').addEventListener('submit', function (e) {
         if (!croppedFile) return; // kein Bild → normaler Submit
         e.preventDefault();
@@ -262,12 +299,17 @@ $f = [
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            if (data.redirect) { window.location.href = data.redirect; }
-            else if (data.errors) { alert(data.errors.join('\n')); }
+            if (data.redirect) {
+                sessionStorage.removeItem(STORAGE_KEY); // aufräumen
+                window.location.href = data.redirect;
+            } else if (data.errors) {
+                alert(data.errors.join('\n'));
+            }
         })
         .catch(function () { alert('Fehler beim Senden.'); });
     });
 
+    /* ── Scanner-Button ───────────────────────────────────── */
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
         ['bezeichnung','kategorie','standort','menge','masse','bemerkung'].forEach(function (name) {

@@ -38,7 +38,7 @@
 
         /* ── Bild-Container ── */
         var imgWrap = document.createElement('div');
-        imgWrap.style.cssText = 'flex:1;position:relative;overflow:hidden;';
+        imgWrap.style.cssText = 'flex:1;position:relative;overflow:hidden;touch-action:none;';
 
         /* ── Bild (object-fit:contain = statisch, füllt den Bereich) ── */
         var img = new Image();
@@ -70,7 +70,7 @@
             var isCorner = type.length === 2;
 
             h.dataset.handle = type;
-            h.style.cssText  = 'position:absolute;box-sizing:border-box;touch-action:none;';
+            h.style.cssText  = 'position:absolute;box-sizing:border-box;touch-action:none;pointer-events:auto;';
 
             if (isCorner) {
                 h.style.width  = HANDLE_SIZE + 'px';
