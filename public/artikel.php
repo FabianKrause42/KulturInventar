@@ -103,12 +103,27 @@ if ($id > 0 && $pdo !== null) {
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .detail-hero img {
+        /* Nur das Platzhalter-Kamera-Icon bekommt opacity */
+        .detail-hero #hero-icon {
             width: 28px;
             height: 28px;
             opacity: 0.4;
+        }
+
+        /* Cover-Bild füllt den Container vollständig */
+        .detail-hero #hero-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0 0 8px 8px;
+            display: block;
         }
 
         .detail-nummer {
@@ -186,7 +201,6 @@ if ($id > 0 && $pdo !== null) {
             <img
                 src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($ersteBild['dateiname']) ?>"
                 id="hero-img"
-                style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block"
                 alt=""
             >
         <?php else: ?>
@@ -300,7 +314,7 @@ if ($id > 0 && $pdo !== null) {
 
         zeigeCropOverlay(file, function (croppedFile, previewUrl) {
             hero.innerHTML =
-                '<img src="' + previewUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block" alt="">' +
+                '<img src="' + previewUrl + '" id="hero-img" alt="">' +
                 '<div id="hero-uploading" style="position:absolute;bottom:6px;right:8px;font-size:0.75rem;color:#555;background:rgba(255,255,255,0.8);padding:2px 6px;border-radius:4px">Speichert\u2026</div>';
             hero.style.position = 'relative';
             hatBild = true;
