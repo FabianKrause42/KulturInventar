@@ -44,14 +44,17 @@ $total = (int)$countStmt->fetchColumn();
 
 // Ergebnisse mit Pagination
 $stmt = $pdo->prepare(
-    'SELECT id, inventarnummer, bezeichnung, kategorie, standort, bild_pfad
-     FROM inventar
-     WHERE inventarnummer LIKE ?
-        OR bezeichnung    LIKE ?
-        OR kategorie      LIKE ?
-        OR standort       LIKE ?
-        OR bemerkung      LIKE ?
-     ORDER BY bezeichnung ASC
+    'SELECT i.id, i.inventarnummer, i.bezeichnung, i.kategorie, i.standort,
+            (SELECT dateiname FROM inventar_bilder
+             WHERE inventar_id = i.id
+             ORDER BY reihenfolge ASC LIMIT 1) AS bild_dateiname
+     FROM inventar i
+     WHERE i.inventarnummer LIKE ?
+        OR i.bezeichnung    LIKE ?
+        OR i.kategorie      LIKE ?
+        OR i.standort       LIKE ?
+        OR i.bemerkung      LIKE ?
+     ORDER BY i.bezeichnung ASC
      LIMIT ? OFFSET ?'
 );
 $stmt->execute([$like, $like, $like, $like, $like, $limit, $offset]);

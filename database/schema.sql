@@ -44,6 +44,41 @@ CREATE TABLE IF NOT EXISTS `inventar` (
 
 
 -- ------------------------------------------------------------
+-- Tabelle: inventar_bilder
+-- Mehrere Bilder pro Artikel (n:1 → inventar)
+-- Migration für bestehende DB:
+--
+--   CREATE TABLE IF NOT EXISTS `inventar_bilder` (
+--     ... (siehe unten)
+--   );
+--
+-- Das alte Feld `bild_pfad` in `inventar` bleibt vorerst
+-- für Rückwärtskompatibilität erhalten.
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `inventar_bilder` (
+    `id`           INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    `inventar_id`  INT UNSIGNED    NOT NULL,
+    `dateiname`    VARCHAR(255)    NOT NULL,
+    `reihenfolge`  TINYINT         NOT NULL DEFAULT 0,
+    `erstellt_am`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+    INDEX `idx_inventar_id` (`inventar_id`),
+    INDEX `idx_reihenfolge` (`inventar_id`, `reihenfolge`),
+
+    CONSTRAINT `fk_bilder_inventar`
+        FOREIGN KEY (`inventar_id`)
+        REFERENCES `inventar` (`id`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+
+-- ------------------------------------------------------------
 -- Tabelle: users
 -- Benutzer mit PIN-Authentifizierung
 -- ------------------------------------------------------------

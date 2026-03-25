@@ -10,6 +10,12 @@ declare(strict_types=1);
 
 function get_thumbnail(array $artikel): string
 {
+    // Neues System: inventar_bilder Tabelle
+    if (!empty($artikel['bild_dateiname'])) {
+        return BASE_URL . '/uploads/' . htmlspecialchars($artikel['bild_dateiname'], ENT_QUOTES, 'UTF-8');
+    }
+
+    // Legacy: altes bild_pfad Feld
     if (!empty($artikel['bild_pfad'])) {
         return htmlspecialchars($artikel['bild_pfad'], ENT_QUOTES, 'UTF-8');
     }

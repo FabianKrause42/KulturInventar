@@ -5,6 +5,7 @@ require_once __DIR__ . '/src/auth/session.php';
 require_login();
 
 require_once __DIR__ . '/src/config/database.php';
+require_once __DIR__ . '/src/helpers/upload.php';
 
 $fehler   = [];
 $erfolg   = false;
@@ -61,8 +62,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $masse     ?: null,
             $bemerkung ?: null,
         ]);
+        $newId = (int) $pdo->lastInsertId();
 
-        header('Location: ' . BASE_URL . '/index.php');
+        // Bild hochladen falls mitgeschickt
+        if (!empty($_FILES['bild']) && $_FILES['bild']['error'] === UPLOAD_ERR_OK) {
+            try {
+                verarbeite_bild_upload($_FILES['bild'], $inventarnummer, $newId, $pdo);
+            } catch (RuntimeException $e) {
+                // Bild-Fehler ist nicht fatal – Artikel wurde angelegt
+            }
+        }
+
+        header('Location: ' . BASE_URL . '/artikel.php?id=' . $newId . '&neu=1');
         exit;
     }
 }
@@ -98,13 +109,14 @@ $f = [
             </div>
         <?php endif; ?>
 
-        <form method="post" action="<?= BASE_URL ?>/artikel_neu.php" autocomplete="off" novalidate>
+        <form method="post" action="<?= BASE_URL ?>/artikel_neu.php" autocomplete="off" novalidate enctype="multipart/form-data">
 
             <!-- ── Vorschaubild ──────────────────────── -->
-            <div class="form-image-placeholder">
-                <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="" class="form-image-icon">
-                <span>Bild hinzufügen</span>
-            </div>
+            <label for="bild-input" class="form-image-placeholder" id="bild-preview-wrap">
+                <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="" class="form-image-icon" id="bild-preview-icon">
+                <span id="bild-preview-text">Bild hinzufügen</span>
+            </label>
+            <input type="file" name="bild" id="bild-input" accept="image/*" capture="environment" style="display:none">
 
             <!-- ── Inventarnummer + QR ──────────────── -->
             <div class="form-header">
@@ -200,6 +212,23 @@ $f = [
 
     <script>
     var BASE_URL = '<?= BASE_URL ?>';
+
+    // Bildvorschau beim Auswählen
+    document.getElementById('bild-input').addEventListener('change', function () {
+        var file = this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var wrap = document.getElementById('bild-preview-wrap');
+            wrap.style.backgroundImage   = 'url(' + e.target.result + ')';
+            wrap.style.backgroundSize    = 'cover';
+            wrap.style.backgroundPosition = 'center';
+            document.getElementById('bild-preview-icon').style.display = 'none';
+            document.getElementById('bild-preview-text').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
         ['bezeichnung','kategorie','standort','menge','masse','bemerkung'].forEach(function (name) {

@@ -6,6 +6,7 @@ require_login();
 
 require_once __DIR__ . '/src/config/database.php';
 require_once __DIR__ . '/src/helpers/placeholder.php';
+require_once __DIR__ . '/src/helpers/upload.php';
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -62,6 +63,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
 }
 
 $gespeichert = isset($_GET['gespeichert']);
+$istNeu      = isset($_GET['neu']);
+
+// Bilder laden
+$bilder    = [];
+$ersteBild = null;
+if ($id > 0 && $pdo !== null) {
+    $imgStmt = $pdo->prepare(
+        'SELECT * FROM inventar_bilder WHERE inventar_id = ? ORDER BY reihenfolge ASC'
+    );
+    $imgStmt->execute([$id]);
+    $bilder    = $imgStmt->fetchAll();
+    $ersteBild = $bilder[0] ?? null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -166,9 +180,20 @@ $gespeichert = isset($_GET['gespeichert']);
     <?php endif; ?>
 
     <!-- Vorschaubild -->
-    <div class="detail-hero">
-        <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="">
+    <div class="detail-hero" id="hero-upload">
+        <?php if ($ersteBild): ?>
+            <img
+                src="<?= BASE_URL ?>/uploads/<?= htmlspecialchars($ersteBild['dateiname']) ?>"
+                id="hero-img"
+                style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block"
+                alt=""
+            >
+        <?php else: ?>
+            <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" id="hero-icon" alt="" style="opacity:0.4;width:28px;height:28px">
+        <?php endif; ?>
+        <div id="hero-uploading" style="display:none;color:#555;font-size:0.9rem">Wird hochgeladen…</div>
     </div>
+    <input type="file" id="bild-input" accept="image/*" capture="environment" style="display:none">
 
     <!-- Inventarnummer -->
     <p class="detail-nummer">Inventarnummer: <?= htmlspecialchars($artikel['inventarnummer']) ?></p>
@@ -251,12 +276,61 @@ $gespeichert = isset($_GET['gespeichert']);
 
 <script>
 (function () {
-    var form = document.getElementById('edit-form');
-    var btn  = document.getElementById('btn-primary');
+    var BASE_URL    = '<?= BASE_URL ?>';
+    var INVENTAR_ID = <?= $id ?>;
+
+    // ── Bild Upload ──────────────────────────────────────────
+    var hero        = document.getElementById('hero-upload');
+    var bildInput   = document.getElementById('bild-input');
+    var uploading   = document.getElementById('hero-uploading');
+
+    hero.style.cursor = 'pointer';
+    hero.addEventListener('click', function () {
+        bildInput.click();
+    });
+
+    bildInput.addEventListener('change', function () {
+        var file = this.files[0];
+        if (!file) return;
+
+        // Optimistische Vorschau sofort zeigen
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            hero.innerHTML =
+                '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:0 0 8px 8px;display:block" alt="">' +
+                '<div id="hero-uploading" style="position:absolute;bottom:6px;right:8px;font-size:0.75rem;color:#555;background:rgba(255,255,255,0.8);padding:2px 6px;border-radius:4px">Speichert\u2026</div>';
+            hero.style.position = 'relative';
+        };
+        reader.readAsDataURL(file);
+
+        // Upload zum Server
+        var fd = new FormData();
+        fd.append('bild', file);
+        fd.append('inventar_id', INVENTAR_ID);
+
+        fetch(BASE_URL + '/api/upload.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var overlay = document.getElementById('hero-uploading');
+                if (data.success) {
+                    if (overlay) overlay.remove();
+                } else {
+                    if (overlay) overlay.textContent = data.error || 'Fehler beim Upload';
+                }
+            })
+            .catch(function () {
+                var overlay = document.getElementById('hero-uploading');
+                if (overlay) overlay.textContent = 'Upload fehlgeschlagen';
+            });
+    });
+
+    // ── Formular-Änderungs-Detektion ────────────────────────
+    var form        = document.getElementById('edit-form');
+    var btn         = document.getElementById('btn-primary');
     if (!form || !btn) return;
 
     var standortUrl = btn.dataset.standortUrl;
-    var changed = false;
+    var changed     = false;
 
     function setChanged() {
         if (changed) return;
@@ -274,7 +348,6 @@ $gespeichert = isset($_GET['gespeichert']);
         if (!changed) {
             window.location.href = standortUrl;
         }
-        // changed=true → type=submit → Browser schickt das Formular
     });
 }());
 </script>
