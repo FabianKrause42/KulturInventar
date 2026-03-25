@@ -571,6 +571,10 @@ main > form {
     overflow: hidden;
 }
 
+.select-wrap:focus-within {
+    box-shadow: 0 0 0 3px rgba(27, 27, 27, 0.15);
+}
+
 .select-wrap .select-label {
     font-size: 1rem;
     white-space: nowrap;
@@ -580,11 +584,17 @@ main > form {
 
 .select-wrap select {
     border: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
-    background-color: transparent;
+    background-color: transparent !important;
     padding-left: 0.35rem;
     flex: 1;
     min-width: 0;
+}
+
+.select-wrap select:focus {
+    box-shadow: none;
+    outline: none;
 }
 
 /* Menge-Feld mit "Menge:" Prefix */

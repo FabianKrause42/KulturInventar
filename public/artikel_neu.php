@@ -169,25 +169,31 @@ $f = [
                     required
                 >
 
-                <select name="kategorie">
-                    <option value="" disabled <?= $f['kategorie'] === '' ? 'selected' : '' ?>>Kategorie</option>
-                    <?php foreach ($kategorien as $kat): ?>
-                        <option value="<?= htmlspecialchars($kat) ?>"
-                            <?= $f['kategorie'] === $kat ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($kat) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="select-wrap">
+                    <span class="select-label">Kategorie:</span>
+                    <select name="kategorie">
+                        <option value="" disabled <?= $f['kategorie'] === '' ? 'selected' : '' ?>>wählen</option>
+                        <?php foreach ($kategorien as $kat): ?>
+                            <option value="<?= htmlspecialchars($kat) ?>"
+                                <?= $f['kategorie'] === $kat ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($kat) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-                <select name="standort">
-                    <option value="" <?= $f['standort'] === '' ? 'selected' : '' ?>>Standort</option>
-                    <?php foreach ($standorte as $ort): ?>
-                        <option value="<?= htmlspecialchars($ort) ?>"
-                            <?= $f['standort'] === $ort ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($ort) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="select-wrap">
+                    <span class="select-label">Standort:</span>
+                    <select name="standort">
+                        <option value="" <?= $f['standort'] === '' ? 'selected' : '' ?>>kein</option>
+                        <?php foreach ($standorte as $ort): ?>
+                            <option value="<?= htmlspecialchars($ort) ?>"
+                                <?= $f['standort'] === $ort ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($ort) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
                 <!-- Menge + Größe nebeneinander -->
                 <div class="form-row">
