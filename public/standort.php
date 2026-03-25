@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
         .standort-header {
             text-align: center;
             padding-top: var(--spacing);
+            margin-bottom: calc(var(--spacing) * 0.5);
         }
 
         .standort-header p {

@@ -76,6 +76,7 @@ $gespeichert = isset($_GET['gespeichert']);
             flex-direction: column;
             min-height: calc(100dvh - 2rem);
             gap: var(--spacing);
+            padding-top: 0;
         }
 
         .detail-hero {
