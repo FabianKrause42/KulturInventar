@@ -22,11 +22,18 @@ function verarbeite_bild_upload(array $file, string $inventarnummer, int $invent
         throw new RuntimeException('Upload-Fehler (Code ' . $file['error'] . ')');
     }
 
-    $mime    = mime_content_type($file['tmp_name']);
+    // MIME via Magic-Bytes prüfen; als Fallback den vom Browser gesendeten Typ verwenden
+    $mime    = @mime_content_type($file['tmp_name']) ?: '';
     $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
     if (!in_array($mime, $allowed, true)) {
-        throw new RuntimeException('Ungültiges Dateiformat – nur JPG, PNG, WEBP oder GIF erlaubt.');
+        // Fallback: vom Client gemeldeter MIME-Typ (wird bei Canvas-Blobs korrekt gesetzt)
+        $clientMime = strtolower(trim($file['type'] ?? ''));
+        if (in_array($clientMime, $allowed, true)) {
+            $mime = $clientMime;
+        } else {
+            throw new RuntimeException('Ungültiges Dateiformat – nur JPG, PNG, WEBP oder GIF erlaubt.');
+        }
     }
 
     if ($file['size'] > 10 * 1024 * 1024) {
