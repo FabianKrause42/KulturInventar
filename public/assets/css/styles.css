@@ -559,6 +559,34 @@ main > form {
     flex: 1;
 }
 
+/* Dropdown-Feld mit Label-Prefix (Kategorie:, Standort:) */
+.select-wrap {
+    display: flex;
+    align-items: center;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    padding: 0 0 0 0.9rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.select-wrap .select-label {
+    font-size: 1rem;
+    white-space: nowrap;
+    color: var(--color-text);
+    flex-shrink: 0;
+}
+
+.select-wrap select {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent;
+    padding-left: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
 /* Menge-Feld mit "Menge:" Prefix */
 .menge-wrap {
     display: flex;

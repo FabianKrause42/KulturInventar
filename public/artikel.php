@@ -226,25 +226,31 @@ if ($id > 0 && $pdo !== null) {
                 required
             >
 
-            <select name="kategorie">
-                <option value="" disabled>Kategorie</option>
-                <?php foreach ($kategorien as $kat): ?>
-                    <option value="<?= htmlspecialchars($kat) ?>"
-                        <?= $artikel['kategorie'] === $kat ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($kat) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <div class="select-wrap">
+                <span class="select-label">Kategorie:</span>
+                <select name="kategorie">
+                    <option value="" disabled>wählen</option>
+                    <?php foreach ($kategorien as $kat): ?>
+                        <option value="<?= htmlspecialchars($kat) ?>"
+                            <?= $artikel['kategorie'] === $kat ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($kat) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-            <select name="standort">
-                <option value="">Standort</option>
-                <?php foreach ($standorte as $ort): ?>
-                    <option value="<?= htmlspecialchars($ort) ?>"
-                        <?= ($artikel['standort'] ?? '') === $ort ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($ort) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <div class="select-wrap">
+                <span class="select-label">Standort:</span>
+                <select name="standort">
+                    <option value="">kein</option>
+                    <?php foreach ($standorte as $ort): ?>
+                        <option value="<?= htmlspecialchars($ort) ?>"
+                            <?= ($artikel['standort'] ?? '') === $ort ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($ort) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
             <div class="form-row">
                 <div class="menge-wrap form-row-small">
@@ -353,6 +359,8 @@ if ($id > 0 && $pdo !== null) {
         changed = true;
         btn.textContent = 'Änderung speichern';
         btn.type = 'submit';
+        btn.classList.remove('btn-standort');
+        btn.classList.add('btn-save');
     }
 
     form.querySelectorAll('input, select, textarea').forEach(function (el) {
