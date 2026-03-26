@@ -28,9 +28,8 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR-Code scannen</title>
+    <?php require_once __DIR__ . '/src/helpers/head_meta.php'; ?>
+    <title>QR-Code scannen – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <style>
         .scanner-wrap {

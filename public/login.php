@@ -99,8 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php require_once __DIR__ . '/src/helpers/head_meta.php'; ?>
     <title>Login – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
 </head>

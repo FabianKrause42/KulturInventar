@@ -1,0 +1,29 @@
+{
+    "name": "KulturInventar",
+    "short_name": "KulturInventar",
+    "description": "Inventarverwaltung für Kulturbetriebe",
+    "start_url": "/kulturinventar/",
+    "scope": "/kulturinventar/",
+    "display": "standalone",
+    "background_color": "#f0f0f0",
+    "theme_color": "#1b1b1b",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/kulturinventar/assets/img/logo_32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/kulturinventar/assets/img/logo_64.png",
+            "sizes": "64x64",
+            "type": "image/png"
+        },
+        {
+            "src": "/kulturinventar/assets/img/logo_128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

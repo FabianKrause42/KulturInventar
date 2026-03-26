@@ -108,8 +108,7 @@ $f = [
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php require_once __DIR__ . '/src/helpers/head_meta.php'; ?>
     <title>Artikel anlegen – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>

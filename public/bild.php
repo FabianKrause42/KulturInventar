@@ -37,7 +37,7 @@ $ersteBild = $bilder[0];
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/src/helpers/head_meta.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= htmlspecialchars($artikel['bezeichnung']) ?> – Bild</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
