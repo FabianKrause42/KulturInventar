@@ -7,6 +7,16 @@ declare(strict_types=1);
 // -------------------------------------------------------
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Session 8 Stunden aktiv halten (auch bei Inaktivität)
+    $lifetime = 8 * 60 * 60; // 28 800 Sekunden
+    ini_set('session.gc_maxlifetime', (string) $lifetime);
+    session_set_cookie_params([
+        'lifetime' => $lifetime,
+        'path'     => '/',
+        'secure'   => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 
