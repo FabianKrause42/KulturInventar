@@ -84,6 +84,54 @@ if ($id > 0 && $pdo !== null) {
     <title><?= $artikel ? htmlspecialchars($artikel['bezeichnung']) : 'Artikel' ?> – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <style>
+        /* ── Bild-Auswahl Action-Sheet ─────────────────────── */
+        .bild-sheet-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 900;
+        }
+        .bild-sheet-backdrop.open { display: block; }
+        .bild-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: var(--color-surface, #fff);
+            border-radius: 16px 16px 0 0;
+            padding: 1.25rem 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 901;
+            transform: translateY(100%);
+            transition: transform 0.22s ease;
+        }
+        .bild-sheet-backdrop.open .bild-sheet { transform: translateY(0); }
+        .bild-sheet-title {
+            font-size: 0.8rem;
+            color: var(--color-text-muted, #888);
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+        .bild-sheet-btn {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: var(--radius, 8px);
+            background: var(--color-input-bg, #e8e8e8);
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+        }
+        .bild-sheet-btn:active { opacity: 0.7; }
+        .bild-sheet-cancel {
+            background: transparent;
+            color: var(--color-text-muted, #888);
+            font-size: 0.9rem;
+        }
         .detail-wrap {
             display: flex;
             flex-direction: column;
@@ -207,7 +255,18 @@ if ($id > 0 && $pdo !== null) {
         <?php endif; ?>
         <div id="hero-uploading" style="display:none;color:#555;font-size:0.9rem">Wird hochgeladen…</div>
     </div>
-    <input type="file" id="bild-input" accept="image/*" style="display:none">
+    <input type="file" id="bild-input-kamera"  accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="bild-input-galerie" accept="image/*" style="display:none">
+
+    <!-- Action-Sheet Bild-Auswahl -->
+    <div class="bild-sheet-backdrop" id="bild-sheet-backdrop">
+        <div class="bild-sheet">
+            <p class="bild-sheet-title">Bild hinzufügen</p>
+            <button class="bild-sheet-btn" id="sheet-btn-kamera">📷 Kamera</button>
+            <button class="bild-sheet-btn" id="sheet-btn-galerie">🖼️ Galerie</button>
+            <button class="bild-sheet-btn bild-sheet-cancel" id="sheet-btn-abbrechen">Abbrechen</button>
+        </div>
+    </div>
 
     <!-- Inventarnummer -->
     <p class="detail-nummer">Inventarnummer: <?= htmlspecialchars($artikel['inventarnummer']) ?></p>

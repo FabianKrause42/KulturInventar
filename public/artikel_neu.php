@@ -112,6 +112,55 @@ $f = [
     <title>Artikel anlegen – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>
+    <style>
+        /* ── Bild-Auswahl Action-Sheet ─────────────────────── */
+        .bild-sheet-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 900;
+        }
+        .bild-sheet-backdrop.open { display: block; }
+        .bild-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: var(--color-surface, #fff);
+            border-radius: 16px 16px 0 0;
+            padding: 1.25rem 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 901;
+            transform: translateY(100%);
+            transition: transform 0.22s ease;
+        }
+        .bild-sheet-backdrop.open .bild-sheet { transform: translateY(0); }
+        .bild-sheet-title {
+            font-size: 0.8rem;
+            color: var(--color-text-muted, #888);
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+        .bild-sheet-btn {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: var(--radius, 8px);
+            background: var(--color-input-bg, #e8e8e8);
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+        }
+        .bild-sheet-btn:active { opacity: 0.7; }
+        .bild-sheet-cancel {
+            background: transparent;
+            color: var(--color-text-muted, #888);
+            font-size: 0.9rem;
+        }
 </head>
 <body>
 
@@ -128,11 +177,22 @@ $f = [
         <form method="post" action="<?= BASE_URL ?>/artikel_neu.php" autocomplete="off" novalidate enctype="multipart/form-data">
 
             <!-- ── Vorschaubild ──────────────────────── -->
-            <label for="bild-input" class="form-image-placeholder" id="bild-preview-wrap">
+            <div class="form-image-placeholder" id="bild-preview-wrap">
                 <img src="<?= BASE_URL ?>/assets/img/icons/camera.png" alt="" class="form-image-icon" id="bild-preview-icon">
                 <span id="bild-preview-text">Bild hinzufügen</span>
-            </label>
-            <input type="file" name="bild" id="bild-input" accept="image/*" style="display:none">
+            </div>
+            <input type="file" id="bild-input-kamera"  accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="bild-input-galerie" accept="image/*" style="display:none">
+
+            <!-- Action-Sheet Bild-Auswahl -->
+            <div class="bild-sheet-backdrop" id="bild-sheet-backdrop">
+                <div class="bild-sheet">
+                    <p class="bild-sheet-title">Bild hinzufügen</p>
+                    <button type="button" class="bild-sheet-btn" id="sheet-btn-kamera">📷 Kamera</button>
+                    <button type="button" class="bild-sheet-btn" id="sheet-btn-galerie">🖼️ Galerie</button>
+                    <button type="button" class="bild-sheet-btn bild-sheet-cancel" id="sheet-btn-abbrechen">Abbrechen</button>
+                </div>
+            </div>
 
             <!-- ── Inventarnummer + QR ──────────────── -->
             <div class="form-header">
@@ -272,24 +332,42 @@ $f = [
             croppedFile = dataUrlToFile(stored, 'bild.jpg');
         }
     }());
+    /* ── Action-Sheet Bild-Auswahl ────────────────────────────── */
+    var backdrop     = document.getElementById('bild-sheet-backdrop');
+    var inputKamera  = document.getElementById('bild-input-kamera');
+    var inputGalerie = document.getElementById('bild-input-galerie');
 
-    /* ── Bildauswahl mit Crop-Overlay ──────────────────────── */
-    document.getElementById('bild-input').addEventListener('change', function () {
-        var file = this.files[0];
+    function oeffneSheet() { backdrop.classList.add('open'); }
+    function schliesseSheet() { backdrop.classList.remove('open'); }
+
+    document.getElementById('bild-preview-wrap').addEventListener('click', oeffneSheet);
+    document.getElementById('sheet-btn-kamera').addEventListener('click', function () {
+        schliesseSheet(); inputKamera.click();
+    });
+    document.getElementById('sheet-btn-galerie').addEventListener('click', function () {
+        schliesseSheet(); inputGalerie.click();
+    });
+    document.getElementById('sheet-btn-abbrechen').addEventListener('click', schliesseSheet);
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) schliesseSheet();
+    });
+
+    function handleFileChange(file) {
         if (!file) return;
-
         zeigeCropOverlay(file, function (cf) {
             croppedFile = cf;
-            // Als DataURL im sessionStorage sichern (überlebt Seitenwechsel zum Scanner)
             var reader = new FileReader();
             reader.onload = function (e) {
                 var dataUrl = e.target.result;
-                try { sessionStorage.setItem(STORAGE_KEY, dataUrl); } catch (ex) { /* quota überschritten */ }
+                try { sessionStorage.setItem(STORAGE_KEY, dataUrl); } catch (ex) {}
                 setPreviewImage(dataUrl);
             };
             reader.readAsDataURL(cf);
         });
-    });
+    }
+
+    inputKamera.addEventListener('change',  function () { handleFileChange(this.files[0]); this.value = ''; });
+    inputGalerie.addEventListener('change', function () { handleFileChange(this.files[0]); this.value = ''; });
 
     /* ── Formular-Submit: gecroptes Bild via AJAX senden ─────── */
     document.querySelector('form').addEventListener('submit', function (e) {
