@@ -157,7 +157,6 @@ $f = [
                     <img src="<?= BASE_URL ?>/assets/img/icons/qr-code.png" width="30" height="30" alt="">
                 </button>
             </div>
-            <p id="inv-hint" style="display:none; margin:0.25rem 0 0; font-size:0.85rem; color:var(--color-text-muted);"></p>
 
             <!-- ── Formularfelder ────────────────────── -->
             <div class="form-fields">
@@ -319,33 +318,20 @@ $f = [
     /* ── Inventarnummer-Duplikatcheck (Enter / Fokusverlust bei 4 Ziffern) ─── */
     (function () {
         var input   = document.getElementById('inventarnummer-input');
-        var hint    = document.getElementById('inv-hint');
         var pending = null;
 
         function check(nummer) {
-            if (!/^\d{4}$/.test(nummer)) {
-                hint.style.display = 'none';
-                return;
-            }
+            if (!/^\d{4}$/.test(nummer)) return;
             clearTimeout(pending);
             pending = setTimeout(function () {
                 fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.id) {
-                            hint.textContent   = 'Inventarnummer „' + nummer + '" existiert bereits — Weiterleitung…';
-                            hint.style.color   = 'var(--color-accent, #a9f2ff)';
-                            hint.style.display = 'block';
-                            setTimeout(function () {
-                                window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
-                            }, 800);
-                        } else {
-                            hint.textContent   = 'Nummer verfügbar ✔';
-                            hint.style.color   = '#a9ffac';
-                            hint.style.display = 'block';
+                            window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
                         }
                     })
-                    .catch(function () { hint.style.display = 'none'; });
+                    .catch(function () {});
             }, 150);
         }
 
@@ -364,7 +350,6 @@ $f = [
 
         // Bei 4 vollständigen Ziffern sofort prüfen
         input.addEventListener('input', function () {
-            hint.style.display = 'none';
             if (/^\d{4}$/.test(this.value.trim())) check(this.value.trim());
         });
     }());

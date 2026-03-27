@@ -93,12 +93,12 @@ if ($id > 0 && $pdo !== null) {
         }
 
         .detail-hero {
-            width: calc(100% + 2 * var(--spacing));
-            margin-left: calc(-1 * var(--spacing));
-            margin-right: calc(-1 * var(--spacing));
-            aspect-ratio: 16 / 7;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            aspect-ratio: 4 / 3;
             background: #eeeeee;
-            border-radius: 0 0 var(--radius) var(--radius);
+            border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -121,7 +121,7 @@ if ($id > 0 && $pdo !== null) {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 0 0 8px 8px;
+            border-radius: var(--radius);
             display: block;
         }
 
