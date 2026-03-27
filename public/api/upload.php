@@ -44,12 +44,15 @@ if (empty($_FILES['bild'])) {
     exit;
 }
 
+$slot = max(1, (int) ($_POST['slot'] ?? 1));
+
 try {
     $dateiname = verarbeite_bild_upload(
         $_FILES['bild'],
         $artikel['inventarnummer'],
         $inventar_id,
-        $pdo
+        $pdo,
+        $slot
     );
 
     echo json_encode([

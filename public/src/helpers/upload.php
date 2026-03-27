@@ -4,19 +4,21 @@ declare(strict_types=1);
 // ---------------------------------------------------------------
 // Bild-Upload-Hilfsfunktion
 // Verarbeitet ein hochgeladenes Bild (GD), speichert es unter
-// uploads/{inventarnummer}_{timestamp}.jpg und trägt es in
-// inventar_bilder ein.
+// uploads/{inventarnummer}_{a|b|c|…}.jpg  (slot 1 = _a, slot 2 = _b, …)
+// Existiert für diesen Slot bereits ein Eintrag, wird er überschrieben
+// (altes File von Disk gelöscht, DB-Zeile aktualisiert).
 // ---------------------------------------------------------------
 
 /**
- * @param array  $file          $_FILES['bild']
+ * @param array  $file           $_FILES['bild']
  * @param string $inventarnummer z.B. "0015"
- * @param int    $inventar_id   ID aus inventar.id
+ * @param int    $inventar_id    ID aus inventar.id
  * @param PDO    $pdo
- * @return string               Dateiname (z.B. "0015_1742890000.jpg")
- * @throws RuntimeException     Bei ungültigem Format, Größe oder GD-Fehler
+ * @param int    $slot           Bildnummer: 1 = _a, 2 = _b, … (Standard: 1)
+ * @return string                Dateiname (z.B. "0015_a.jpg")
+ * @throws RuntimeException      Bei ungültigem Format, Größe oder GD-Fehler
  */
-function verarbeite_bild_upload(array $file, string $inventarnummer, int $inventar_id, PDO $pdo): string
+function verarbeite_bild_upload(array $file, string $inventarnummer, int $inventar_id, PDO $pdo, int $slot = 1): string
 {
     if ($file['error'] !== UPLOAD_ERR_OK) {
         throw new RuntimeException('Upload-Fehler (Code ' . $file['error'] . ')');
@@ -45,8 +47,9 @@ function verarbeite_bild_upload(array $file, string $inventarnummer, int $invent
         mkdir($uploadDir, 0755, true);
     }
 
-    // Dateiname: inventarnummer_timestamp.jpg
-    $dateiname = $inventarnummer . '_' . time() . '.jpg';
+    // Dateiname: inventarnummer_a.jpg  (slot 1 → _a, slot 2 → _b, …)
+    $suffix    = chr(ord('a') + max(0, $slot - 1));
+    $dateiname = $inventarnummer . '_' . $suffix . '.jpg';
     $zielPfad  = $uploadDir . $dateiname;
 
     // Bild mit GD laden
@@ -81,16 +84,30 @@ function verarbeite_bild_upload(array $file, string $inventarnummer, int $invent
     imagejpeg($image, $zielPfad, 85);
     imagedestroy($image);
 
-    // DB: nächste Reihenfolge ermitteln und eintragen
-    $maxRei = $pdo->prepare(
-        'SELECT COALESCE(MAX(reihenfolge), 0) FROM inventar_bilder WHERE inventar_id = ?'
+    // DB: Slot bereits belegt? → update + altes File löschen; sonst neu eintragen
+    $existStmt = $pdo->prepare(
+        'SELECT id, dateiname FROM inventar_bilder WHERE inventar_id = ? AND reihenfolge = ? LIMIT 1'
     );
-    $maxRei->execute([$inventar_id]);
-    $nextRei = (int) $maxRei->fetchColumn() + 1;
+    $existStmt->execute([$inventar_id, $slot]);
+    $existRow = $existStmt->fetch();
 
-    $pdo->prepare(
-        'INSERT INTO inventar_bilder (inventar_id, dateiname, reihenfolge) VALUES (?, ?, ?)'
-    )->execute([$inventar_id, $dateiname, $nextRei]);
+    if ($existRow) {
+        // Altes File von Disk entfernen, falls der Name sich geändert hat
+        // (z.B. Übergang von altem timestamp-Schema)
+        if ($existRow['dateiname'] !== $dateiname) {
+            $alteDatei = $uploadDir . $existRow['dateiname'];
+            if (is_file($alteDatei)) {
+                unlink($alteDatei);
+            }
+        }
+        $pdo->prepare(
+            'UPDATE inventar_bilder SET dateiname = ? WHERE id = ?'
+        )->execute([$dateiname, $existRow['id']]);
+    } else {
+        $pdo->prepare(
+            'INSERT INTO inventar_bilder (inventar_id, dateiname, reihenfolge) VALUES (?, ?, ?)'
+        )->execute([$inventar_id, $dateiname, $slot]);
+    }
 
     return $dateiname;
 }
