@@ -139,6 +139,7 @@ $f = [
                 <input
                     type="text"
                     name="inventarnummer"
+                    id="inventarnummer-input"
                     placeholder="Inventarnummer"
                     value="<?= htmlspecialchars($f['inventarnummer']) ?>"
                     pattern="[0-9]{4}"
@@ -156,6 +157,7 @@ $f = [
                     <img src="<?= BASE_URL ?>/assets/img/icons/qr-code.png" width="30" height="30" alt="">
                 </button>
             </div>
+            <p id="inv-hint" style="display:none; margin:0.25rem 0 0; font-size:0.85rem; color:var(--color-text-muted);"></p>
 
             <!-- ── Formularfelder ────────────────────── -->
             <div class="form-fields">
@@ -313,6 +315,59 @@ $f = [
         })
         .catch(function () { alert('Fehler beim Senden.'); });
     });
+
+    /* ── Inventarnummer-Duplikatcheck (Enter / Fokusverlust bei 4 Ziffern) ─── */
+    (function () {
+        var input   = document.getElementById('inventarnummer-input');
+        var hint    = document.getElementById('inv-hint');
+        var pending = null;
+
+        function check(nummer) {
+            if (!/^\d{4}$/.test(nummer)) {
+                hint.style.display = 'none';
+                return;
+            }
+            clearTimeout(pending);
+            pending = setTimeout(function () {
+                fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.id) {
+                            hint.textContent   = 'Inventarnummer „' + nummer + '" existiert bereits — Weiterleitung…';
+                            hint.style.color   = 'var(--color-accent, #a9f2ff)';
+                            hint.style.display = 'block';
+                            setTimeout(function () {
+                                window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
+                            }, 800);
+                        } else {
+                            hint.textContent   = 'Nummer verfügbar ✔';
+                            hint.style.color   = '#a9ffac';
+                            hint.style.display = 'block';
+                        }
+                    })
+                    .catch(function () { hint.style.display = 'none'; });
+            }, 150);
+        }
+
+        // Enter im Inventarnummer-Feld
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                check(this.value.trim());
+            }
+        });
+
+        // Fokusverlust (z.B. Wechsel zum nächsten Feld)
+        input.addEventListener('blur', function () {
+            check(this.value.trim());
+        });
+
+        // Bei 4 vollständigen Ziffern sofort prüfen
+        input.addEventListener('input', function () {
+            hint.style.display = 'none';
+            if (/^\d{4}$/.test(this.value.trim())) check(this.value.trim());
+        });
+    }());
 
     /* ── Scanner-Button ───────────────────────────────────── */
     document.getElementById('btn-scan-neu').addEventListener('click', function () {

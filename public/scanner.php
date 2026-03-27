@@ -209,10 +209,26 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
 
         function handleResult(nummer) {
             if (context === 'neu') {
-                // Nummer + alle bisherigen Felder zurück zu artikel_neu.php
-                var params = new URLSearchParams(felder);
-                params.set('inventarnummer', nummer);
-                window.location.href = BASE_URL + '/artikel_neu.php?' + params.toString();
+                // Erst prüfen ob der Artikel schon existiert
+                fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.id) {
+                            // Schon vorhanden → direkt zur Detailseite
+                            window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
+                        } else {
+                            // Neu → Nummer + bisherige Felder zurück zu artikel_neu.php
+                            var params = new URLSearchParams(felder);
+                            params.set('inventarnummer', nummer);
+                            window.location.href = BASE_URL + '/artikel_neu.php?' + params.toString();
+                        }
+                    })
+                    .catch(function () {
+                        // Lookup fehlgeschlagen → trotzdem weiterleiten
+                        var params = new URLSearchParams(felder);
+                        params.set('inventarnummer', nummer);
+                        window.location.href = BASE_URL + '/artikel_neu.php?' + params.toString();
+                    });
             } else {
                 // Inventarnummer in DB nachschlagen → artikel.php
                 fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
