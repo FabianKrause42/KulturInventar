@@ -120,6 +120,39 @@ README.md
 
 ---
 
+## QR-Code-Etiketten
+
+Jeder Artikel bekommt ein Etikett mit einem QR-Code, der auf folgende URL zeigt:
+
+```
+https://sifio.de/kia.php?id=0001
+```
+
+### Ablauf beim Scan (Handykamera)
+
+1. `kia.php` (Root von sifio.de) normalisiert die Inventarnummer und leitet weiter zu `goto.php`
+2. `goto.php` (in `kulturinventar/`) prüft den Login und sucht die Inventarnummer in der DB:
+   - **Artikel existiert** → Weiterleitung zur Detailseite (`artikel.php`)
+   - **Artikel existiert nicht** → Weiterleitung zu `artikel_neu.php` mit vorausgefüllter Inventarnummer
+   - **Nicht eingeloggt** → Login-Seite, danach automatische Rückkehr zu `goto.php`
+
+### Manuelles Deployment von kia.php
+
+`tools/kia.php` wird **nicht** automatisch deployed – sie muss einmalig manuell in das
+**Root-Verzeichnis** von `sifio.de` hochgeladen werden (nicht in `kulturinventar/`).
+
+```
+sifio.de/
+  kia.php          ← manuell hochladen (aus tools/kia.php)
+  kulturinventar/
+    goto.php       ← wird automatisch per GitHub Actions deployed
+    ...
+```
+
+Bei Änderungen an `tools/kia.php` ebenfalls manuell erneut hochladen.
+
+---
+
 ## Einrichtung
 
 1. `src/config/config.example.php` kopieren und als `src/config/config.local.php` speichern
