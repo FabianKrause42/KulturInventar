@@ -161,6 +161,7 @@ $f = [
             color: var(--color-text-muted, #888);
             font-size: 0.9rem;
         }
+    </style>
 </head>
 <body>
 
