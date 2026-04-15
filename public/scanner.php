@@ -230,22 +230,18 @@ $backLabel = $context === 'neu' ? 'Zurück' : 'Zurück zur Suche';
                         window.location.href = BASE_URL + '/artikel_neu.php?' + params.toString();
                     });
             } else {
-                // Inventarnummer in DB nachschlagen → artikel.php
+                // Inventarnummer in DB nachschlagen → artikel.php oder artikel_neu.php
                 fetch(BASE_URL + '/api/lookup.php?inventarnummer=' + encodeURIComponent(nummer))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.id) {
                             window.location.href = BASE_URL + '/artikel.php?id=' + data.id;
                         } else {
-                            status.textContent = 'Artikel ' + nummer + ' nicht gefunden.';
-                            scanning = true;
-                            requestAnimationFrame(tick);
+                            window.location.href = BASE_URL + '/artikel_neu.php?inventarnummer=' + encodeURIComponent(nummer);
                         }
                     })
                     .catch(function () {
-                        status.textContent = 'Fehler beim Nachschlagen.';
-                        scanning = true;
-                        requestAnimationFrame(tick);
+                        window.location.href = BASE_URL + '/artikel_neu.php?inventarnummer=' + encodeURIComponent(nummer);
                     });
             }
         }
