@@ -6,11 +6,11 @@ require_login();
 
 require_once __DIR__ . '/src/config/database.php';
 require_once __DIR__ . '/src/helpers/upload.php';
+require_once __DIR__ . '/src/helpers/tags.php';
 
 $fehler   = [];
 $erfolg   = false;
 
-$kategorien = ['Audio', 'Licht', 'Video', 'IT', 'Bühne', 'Möbel', 'Kabel', 'Werkzeug', 'Sonstiges'];
 $standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,11 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $inventarnummer = trim($_POST['inventarnummer'] ?? '');
     $bezeichnung    = trim($_POST['bezeichnung']    ?? '');
-    $kategorie      = trim($_POST['kategorie']      ?? '');
     $standort       = trim($_POST['standort']       ?? '');
     $menge          = (int) ($_POST['menge']        ?? 1);
     $masse          = trim($_POST['masse']          ?? '');
     $bemerkung      = trim($_POST['bemerkung']      ?? '');
+    $tagsRaw        = trim($_POST['tags']           ?? '');
 
     // Validierung
     if ($inventarnummer === '') {
@@ -33,9 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($bezeichnung === '') {
         $fehler[] = 'Bezeichnung ist Pflicht.';
-    }
-    if ($kategorie === '' || !in_array($kategorie, $kategorien, true)) {
-        $fehler[] = 'Bitte eine gültige Kategorie wählen.';
     }
     if ($menge < 1) {
         $menge = 1;
@@ -53,19 +50,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($fehler) && $pdo !== null) {
         $stmt = $pdo->prepare(
             'INSERT INTO inventar
-               (inventarnummer, bezeichnung, kategorie, standort, menge, masse, bemerkung)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+               (inventarnummer, bezeichnung, standort, menge, masse, bemerkung)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $inventarnummer,
             $bezeichnung,
-            $kategorie,
             $standort ?: null,
             $menge,
             $masse     ?: null,
             $bemerkung ?: null,
         ]);
         $newId = (int) $pdo->lastInsertId();
+
+        // Tags speichern
+        setzeTags($newId, parseTags($tagsRaw), $pdo);
 
         // Bild hochladen falls mitgeschickt
         if (!empty($_FILES['bild']) && $_FILES['bild']['error'] === UPLOAD_ERR_OK) {
@@ -112,6 +111,7 @@ $f = [
     <title>Artikel anlegen – KulturInventar</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/styles.css">
     <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/tag-input.js"></script>
     <style>
         /* ── Bild-Auswahl Action-Sheet ─────────────────────── */
         .bild-sheet-backdrop {
@@ -230,17 +230,15 @@ $f = [
                     required
                 >
 
-                <div class="select-wrap">
-                    <span class="select-label">Kategorie:</span>
-                    <select name="kategorie">
-                        <option value="" disabled <?= $f['kategorie'] === '' ? 'selected' : '' ?>>wählen</option>
-                        <?php foreach ($kategorien as $kat): ?>
-                            <option value="<?= htmlspecialchars($kat) ?>"
-                                <?= $f['kategorie'] === $kat ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($kat) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="tag-input-wrap">
+                    <input
+                        type="text"
+                        id="tag-input"
+                        name="tags"
+                        placeholder="Tags, kommagetrennt (max. 3)"
+                        autocomplete="off"
+                        value=""
+                    >
                 </div>
 
                 <div class="select-wrap">
@@ -436,12 +434,15 @@ $f = [
     /* ── Scanner-Button ───────────────────────────────────── */
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
-        ['bezeichnung','kategorie','standort','menge','masse','bemerkung'].forEach(function (name) {
+        ['bezeichnung','standort','menge','masse','bemerkung'].forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
             if (el) params.set(name, el.value);
         });
         window.location.href = BASE_URL + '/scanner.php?' + params.toString();
     });
+
+    /* ── Tag-Eingabe initialisieren ───────────────────── */
+    initTagInput(document.getElementById('tag-input'), BASE_URL);
     </script>
 
 </body>

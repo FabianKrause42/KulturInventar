@@ -32,28 +32,32 @@ $like = '%' . $q . '%';
 
 // Gesamtanzahl
 $countStmt = $pdo->prepare(
-    'SELECT COUNT(*) FROM inventar
-     WHERE inventarnummer LIKE ?
-        OR bezeichnung    LIKE ?
-        OR kategorie      LIKE ?
-        OR standort       LIKE ?
-        OR bemerkung      LIKE ?'
+    'SELECT COUNT(DISTINCT i.id) FROM inventar i
+     LEFT JOIN inventar_tags it ON it.inventar_id = i.id
+     LEFT JOIN tags t           ON t.id = it.tag_id
+     WHERE i.inventarnummer LIKE ?
+        OR i.bezeichnung    LIKE ?
+        OR i.standort       LIKE ?
+        OR i.bemerkung      LIKE ?
+        OR t.name           LIKE ?'
 );
 $countStmt->execute([$like, $like, $like, $like, $like]);
 $total = (int)$countStmt->fetchColumn();
 
 // Ergebnisse mit Pagination
 $stmt = $pdo->prepare(
-    'SELECT i.id, i.inventarnummer, i.bezeichnung, i.kategorie, i.standort,
+    'SELECT DISTINCT i.id, i.inventarnummer, i.bezeichnung, i.standort,
             (SELECT dateiname FROM inventar_bilder
              WHERE inventar_id = i.id
              ORDER BY reihenfolge ASC LIMIT 1) AS bild_dateiname
      FROM inventar i
+     LEFT JOIN inventar_tags it ON it.inventar_id = i.id
+     LEFT JOIN tags t           ON t.id = it.tag_id
      WHERE i.inventarnummer LIKE ?
         OR i.bezeichnung    LIKE ?
-        OR i.kategorie      LIKE ?
         OR i.standort       LIKE ?
         OR i.bemerkung      LIKE ?
+        OR t.name           LIKE ?
      ORDER BY i.bezeichnung ASC
      LIMIT ? OFFSET ?'
 );

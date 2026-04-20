@@ -7,6 +7,7 @@ require_login();
 require_once __DIR__ . '/src/config/database.php';
 require_once __DIR__ . '/src/helpers/placeholder.php';
 require_once __DIR__ . '/src/helpers/upload.php';
+require_once __DIR__ . '/src/helpers/tags.php';
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -17,31 +18,28 @@ if ($id > 0 && $pdo !== null) {
     $artikel = $stmt->fetch() ?: null;
 }
 
-$kategorien = ['Audio', 'Licht', 'Video', 'IT', 'Bühne', 'Möbel', 'Kabel', 'Werkzeug', 'Sonstiges'];
 $standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
 
 $fehler  = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null) {
     $bezeichnung = trim($_POST['bezeichnung'] ?? '');
-    $kategorie   = trim($_POST['kategorie']   ?? '');
     $standort    = trim($_POST['standort']    ?? '');
     $menge       = (int) ($_POST['menge']     ?? 1);
     $masse       = trim($_POST['masse']       ?? '');
     $bemerkung   = trim($_POST['bemerkung']   ?? '');
+    $tagsRaw     = trim($_POST['tags']        ?? '');
 
     if ($bezeichnung === '') $fehler[] = 'Bezeichnung ist Pflicht.';
-    if (!in_array($kategorie, $kategorien, true)) $fehler[] = 'Ungültige Kategorie.';
     if ($menge < 1) $menge = 1;
 
     if (empty($fehler)) {
         $pdo->prepare(
             'UPDATE inventar
-             SET bezeichnung=?, kategorie=?, standort=?, menge=?, masse=?, bemerkung=?
+             SET bezeichnung=?, standort=?, menge=?, masse=?, bemerkung=?
              WHERE id=?'
         )->execute([
             $bezeichnung,
-            $kategorie,
             $standort ?: null,
             $menge,
             $masse     ?: null,
@@ -49,13 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
             $id,
         ]);
 
+        setzeTags($id, parseTags($tagsRaw), $pdo);
+
         header('Location: ' . BASE_URL . '/artikel.php?id=' . $id . '&gespeichert=1');
         exit;
     }
 
     // Fehler: Formularwerte aus POST übernehmen
     $artikel['bezeichnung'] = $bezeichnung;
-    $artikel['kategorie']   = $kategorie;
     $artikel['standort']    = $standort;
     $artikel['menge']       = $menge;
     $artikel['masse']       = $masse;
@@ -75,6 +74,12 @@ if ($id > 0 && $pdo !== null) {
     $imgStmt->execute([$id]);
     $bilder    = $imgStmt->fetchAll();
     $ersteBild = $bilder[0] ?? null;
+}
+
+// Tags laden
+$tagsValue = '';
+if ($id > 0 && $pdo !== null) {
+    $tagsValue = implode(', ', ladeTags($id, $pdo));
 }
 ?>
 <!DOCTYPE html>
@@ -215,6 +220,7 @@ if ($id > 0 && $pdo !== null) {
         }
     </style>
     <script src="<?= BASE_URL ?>/assets/js/crop.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/tag-input.js"></script>
 </head>
 <body>
 <main class="detail-wrap">
@@ -284,17 +290,15 @@ if ($id > 0 && $pdo !== null) {
                 required
             >
 
-            <div class="select-wrap">
-                <span class="select-label">Kategorie:</span>
-                <select name="kategorie">
-                    <option value="" disabled>wählen</option>
-                    <?php foreach ($kategorien as $kat): ?>
-                        <option value="<?= htmlspecialchars($kat) ?>"
-                            <?= $artikel['kategorie'] === $kat ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($kat) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="tag-input-wrap">
+                <input
+                    type="text"
+                    id="tag-input"
+                    name="tags"
+                    placeholder="Tags, kommagetrennt (max. 3)"
+                    autocomplete="off"
+                    value="<?= htmlspecialchars($tagsValue) ?>"
+                >
             </div>
 
             <div class="select-wrap">
@@ -449,6 +453,9 @@ if ($id > 0 && $pdo !== null) {
         }
     });
 }());
+
+    /* ── Tag-Eingabe initialisieren ───────────────────── */
+    initTagInput(document.getElementById('tag-input'), BASE_URL);
 </script>
 
 </body>

@@ -582,6 +582,42 @@ main > form {
     flex-shrink: 0;
 }
 
+/* ── Tag-Eingabe ──────────────────────────────────────── */
+.tag-input-wrap {
+    position: relative;
+}
+
+.tag-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-top: 2px;
+    padding: 0;
+    list-style: none;
+    z-index: 200;
+    overflow: hidden;
+}
+
+.tag-dropdown li {
+    padding: 0.65rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.tag-dropdown li:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tag-dropdown li:active,
+.tag-dropdown li.active {
+    background: var(--color-input-bg, #f5f5f5);
+}
+
 .select-wrap select {
     border: none !important;
     border-radius: 0 !important;
