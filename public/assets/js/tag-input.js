@@ -100,20 +100,25 @@
                 hideDropdown();
                 return;
             }
-            // Backspace: letzten bestätigten Tag komplett löschen
+            // Backspace: immer ganzes Wort / ganzen Tag löschen
             if (e.key === 'Backspace') {
+                e.preventDefault();
+                hideDropdown();
                 var currentWord = getCurrentWord();
-                // Nur eingreifen wenn kein Zeichen mehr vor dem Cursor im aktuellen Wort steht
-                if (currentWord === '') {
-                    var val = input.value.replace(/,\s*$/, '').trimEnd();
-                    var lastComma = val.lastIndexOf(',');
-                    if (lastComma >= 0) {
-                        e.preventDefault();
-                        input.value = val.slice(0, lastComma).trimEnd();
-                        // Trailing ", " wieder anhängen damit nächstes Wort korrekt positioniert ist
-                        if (input.value !== '') input.value += ', ';
-                        hideDropdown();
-                    }
+                if (currentWord !== '') {
+                    // Aktuelles (noch nicht bestätigtes) Wort komplett löschen
+                    var val2      = input.value;
+                    var lastComma2 = val2.lastIndexOf(',');
+                    input.value   = lastComma2 >= 0
+                        ? val2.slice(0, lastComma2).trimEnd() + ', '
+                        : '';
+                } else {
+                    // Kein aktuelles Wort → letzten bestätigten Tag löschen
+                    var val3      = input.value.replace(/,\s*$/, '').trimEnd();
+                    var lastComma3 = val3.lastIndexOf(',');
+                    input.value   = lastComma3 >= 0
+                        ? val3.slice(0, lastComma3).trimEnd() + ', '
+                        : '';
                 }
                 return;
             }
