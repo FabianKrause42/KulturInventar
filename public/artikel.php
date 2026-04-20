@@ -359,23 +359,28 @@ if ($id > 0 && $pdo !== null) {
     var INVENTAR_ID = <?= $id ?>;
 
     // ── Bild Upload ──────────────────────────────────────────
-    var hero      = document.getElementById('hero-upload');
-    var bildInput = document.getElementById('bild-input');
-    var hatBild   = <?= $ersteBild ? 'true' : 'false' ?>;
+    var hero         = document.getElementById('hero-upload');
+    var inputKamera  = document.getElementById('bild-input-kamera');
+    var inputGalerie = document.getElementById('bild-input-galerie');
+    var backdrop     = document.getElementById('bild-sheet-backdrop');
+    var hatBild      = <?= $ersteBild ? 'true' : 'false' ?>;
 
-    hero.style.cursor = 'pointer';
-    hero.addEventListener('click', function () {
-        if (hatBild) {
-            window.location.href = BASE_URL + '/bild.php?id=' + INVENTAR_ID;
-        } else {
-            bildInput.click();
-        }
+    function oeffneSheet() { backdrop.classList.add('open'); }
+    function schliesseSheet() { backdrop.classList.remove('open'); }
+
+    document.getElementById('sheet-btn-kamera').addEventListener('click', function () {
+        schliesseSheet(); inputKamera.click();
+    });
+    document.getElementById('sheet-btn-galerie').addEventListener('click', function () {
+        schliesseSheet(); inputGalerie.click();
+    });
+    document.getElementById('sheet-btn-abbrechen').addEventListener('click', schliesseSheet);
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) schliesseSheet();
     });
 
-    bildInput.addEventListener('change', function () {
-        var file = this.files[0];
+    function handleFileChange(file) {
         if (!file) return;
-
         zeigeCropOverlay(file, function (croppedFile, previewUrl) {
             hero.innerHTML =
                 '<img src="' + previewUrl + '" id="hero-img" alt="">' +
@@ -402,6 +407,18 @@ if ($id > 0 && $pdo !== null) {
                     if (overlay) overlay.textContent = 'Upload fehlgeschlagen';
                 });
         });
+    }
+
+    inputKamera.addEventListener('change',  function () { handleFileChange(this.files[0]); this.value = ''; });
+    inputGalerie.addEventListener('change', function () { handleFileChange(this.files[0]); this.value = ''; });
+
+    hero.style.cursor = 'pointer';
+    hero.addEventListener('click', function () {
+        if (hatBild) {
+            window.location.href = BASE_URL + '/bild.php?id=' + INVENTAR_ID;
+        } else {
+            oeffneSheet();
+        }
     });
 
     // ── Formular-Änderungs-Detektion ────────────────────────
