@@ -100,6 +100,23 @@
                 hideDropdown();
                 return;
             }
+            // Backspace: letzten bestätigten Tag komplett löschen
+            if (e.key === 'Backspace') {
+                var currentWord = getCurrentWord();
+                // Nur eingreifen wenn kein Zeichen mehr vor dem Cursor im aktuellen Wort steht
+                if (currentWord === '') {
+                    var val = input.value.replace(/,\s*$/, '').trimEnd();
+                    var lastComma = val.lastIndexOf(',');
+                    if (lastComma >= 0) {
+                        e.preventDefault();
+                        input.value = val.slice(0, lastComma).trimEnd();
+                        // Trailing ", " wieder anhängen damit nächstes Wort korrekt positioniert ist
+                        if (input.value !== '') input.value += ', ';
+                        hideDropdown();
+                    }
+                }
+                return;
+            }
             if (e.key === ' ') {
                 var wordSpace = getCurrentWord();
                 if (!wordSpace) return;
