@@ -97,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $f = [
     'inventarnummer' => $_POST['inventarnummer'] ?? $_GET['inventarnummer'] ?? '',
     'bezeichnung'    => $_POST['bezeichnung']    ?? $_GET['bezeichnung']    ?? '',
-    'kategorie'      => $_POST['kategorie']      ?? $_GET['kategorie']      ?? '',
     'standort'       => $_POST['standort']       ?? $_GET['standort']       ?? '',
     'menge'          => $_POST['menge']          ?? $_GET['menge']          ?? '1',
     'masse'          => $_POST['masse']          ?? $_GET['masse']          ?? '',

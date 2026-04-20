@@ -452,10 +452,10 @@ if ($id > 0 && $pdo !== null) {
             window.location.href = standortUrl;
         }
     });
-}());
 
     /* ── Tag-Eingabe initialisieren ───────────────────── */
     initTagInput(document.getElementById('tag-input'), BASE_URL);
+}());
 </script>
 
 </body>
