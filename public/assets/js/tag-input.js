@@ -49,6 +49,7 @@
             var before    = lastComma >= 0 ? val.slice(0, lastComma).trimEnd() : '';
             input.value   = (before ? before + ', ' : '') + word + ', ';
             hideDropdown();
+            input.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         function hideDropdown() {
@@ -59,7 +60,8 @@
         }
 
         function updateActive() {
-            Array.from(dropdown.children).forEach(function (li, i) {
+            // Header überspringen (Index 0 = Header, Items ab Index 1)
+            Array.from(dropdown.querySelectorAll('li:not(.tag-dropdown-header)')).forEach(function (li, i) {
                 li.classList.toggle('active', i === activeIndex);
             });
         }
@@ -69,11 +71,21 @@
             suggestions = items;
             activeIndex = -1;
             dropdown.innerHTML = '';
+
+            // Kopfzeile
+            var header = document.createElement('li');
+            header.className   = 'tag-dropdown-header';
+            header.textContent = 'Vorschläge';
+            dropdown.appendChild(header);
+
             items.forEach(function (name) {
-                var li = document.createElement('li');
-                li.textContent = name;
+                var li   = document.createElement('li');
+                var chip = document.createElement('span');
+                chip.className   = 'tag-chip-suggestion';
+                chip.textContent = name;
+                li.appendChild(chip);
                 li.addEventListener('mousedown', function (e) {
-                    e.preventDefault(); // blur verhindern
+                    e.preventDefault();
                     confirmWord(name);
                 });
                 dropdown.appendChild(li);
@@ -120,6 +132,7 @@
                         ? val3.slice(0, lastComma3).trimEnd() + ', '
                         : '';
                 }
+                input.dispatchEvent(new Event('change', { bubbles: true }));
                 return;
             }
             if (e.key === ' ') {
