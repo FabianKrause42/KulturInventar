@@ -59,6 +59,7 @@ require_login();
     <script>
     var BASE_URL = '<?= BASE_URL ?>';
     (function () {
+        var STORAGE_KEY = 'kulturinventar_suche';
         var input     = document.getElementById('q');
         var list      = document.getElementById('result-list');
         var label     = document.getElementById('result-label');
@@ -77,11 +78,13 @@ require_login();
                 var q = input.value.trim();
                 if (q === currentQuery) return;
                 currentQuery = q;
+                sessionStorage.setItem(STORAGE_KEY, q);
                 reset();
                 if (q.length >= 3) {
                     loadMore();
                 } else {
                     label.textContent = '';
+                    sessionStorage.removeItem(STORAGE_KEY);
                 }
             }, 300);
         });
@@ -158,6 +161,14 @@ require_login();
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
+        }
+
+        // ── Gespeicherte Suche wiederherstellen ──────
+        var savedQuery = sessionStorage.getItem(STORAGE_KEY);
+        if (savedQuery && savedQuery.length >= 3) {
+            input.value  = savedQuery;
+            currentQuery = savedQuery;
+            loadMore();
         }
     }());
     </script>
