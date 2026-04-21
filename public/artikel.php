@@ -369,14 +369,42 @@ if ($id > 0 && $pdo !== null) {
     var backdrop     = document.getElementById('bild-sheet-backdrop');
     var hatBild      = <?= $ersteBild ? 'true' : 'false' ?>;
 
+    var FORM_STORAGE_KEY = 'artikel_felder_<?= $id ?>';
+
+    // ── Formularwerte sichern (vor Kamera-Öffnung) ──────────
+    function speichereFelder() {
+        var form = document.getElementById('edit-form');
+        if (!form) return;
+        var data = {};
+        form.querySelectorAll('input, select, textarea').forEach(function (el) {
+            if (el.name) data[el.name] = el.value;
+        });
+        sessionStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ── Formularwerte wiederherstellen (nach Browser-Reload) ─
+    (function () {
+        var saved = sessionStorage.getItem(FORM_STORAGE_KEY);
+        if (!saved) return;
+        var data;
+        try { data = JSON.parse(saved); } catch (e) { return; }
+        var form = document.getElementById('edit-form');
+        if (!form) return;
+        Object.keys(data).forEach(function (name) {
+            var el = form.querySelector('[name="' + name + '"]');
+            if (el) el.value = data[name];
+        });
+        sessionStorage.removeItem(FORM_STORAGE_KEY);
+    }());
+
     function oeffneSheet() { backdrop.classList.add('open'); }
     function schliesseSheet() { backdrop.classList.remove('open'); }
 
     document.getElementById('sheet-btn-kamera').addEventListener('click', function () {
-        schliesseSheet(); inputKamera.click();
+        speichereFelder(); schliesseSheet(); inputKamera.click();
     });
     document.getElementById('sheet-btn-galerie').addEventListener('click', function () {
-        schliesseSheet(); inputGalerie.click();
+        speichereFelder(); schliesseSheet(); inputGalerie.click();
     });
     document.getElementById('sheet-btn-abbrechen').addEventListener('click', schliesseSheet);
     backdrop.addEventListener('click', function (e) {
