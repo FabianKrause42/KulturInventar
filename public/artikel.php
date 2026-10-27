@@ -23,6 +23,8 @@ $standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkz
 $fehler  = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null) {
+    $origStandort = $artikel['standort'] ?? '';
+
     $bezeichnung = trim($_POST['bezeichnung'] ?? '');
     $standort    = trim($_POST['standort']    ?? '');
     $menge       = (int) ($_POST['menge']     ?? 1);
@@ -34,13 +36,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
     if ($menge < 1) $menge = 1;
 
     if (empty($fehler)) {
+        // Regalnummer nur behalten, solange der Standort unverändert bleibt
+        $regalNr = ($standort === $origStandort) ? ($artikel['regal_nr'] ?? null) : null;
+
         $pdo->prepare(
             'UPDATE inventar
-             SET bezeichnung=?, standort=?, menge=?, masse=?, bemerkung=?
+             SET bezeichnung=?, standort=?, regal_nr=?, menge=?, masse=?, bemerkung=?
              WHERE id=?'
         )->execute([
             $bezeichnung,
             $standort ?: null,
+            $regalNr,
             $menge,
             $masse     ?: null,
             $bemerkung ?: null,
@@ -313,6 +319,9 @@ if ($id > 0 && $pdo !== null) {
                     <?php endforeach; ?>
                 </select>
             </div>
+            <?php if (!empty($artikel['regal_nr'])): ?>
+                <p class="regal-hint">Regal <?= (int) $artikel['regal_nr'] ?></p>
+            <?php endif; ?>
 
             <div class="form-row">
                 <div class="menge-wrap form-row-small">
