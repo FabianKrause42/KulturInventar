@@ -153,6 +153,46 @@ Bei Änderungen an `tools/kia.php` ebenfalls manuell erneut hochladen.
 
 ---
 
+## QR-Code-Etiketten für Regale
+
+Jedes Regal bekommt ein Etikett mit einem QR-Code, der auf folgende URL zeigt:
+
+```
+https://sifio.de/kir.php?id=101
+```
+
+Regalnummern sind 3-stellig und global eindeutig (1. Ziffer = Raum, 2.+3. Ziffer
+fortlaufend). Die gültigen Nummern je Lagerort stehen in `src/config/lagerorte.php`.
+
+### Ablauf beim Scan (Handykamera)
+
+1. `kir.php` (Root von sifio.de) leitet weiter zu `regal.php`
+2. `regal.php` (in `kulturinventar/`) prüft den Login und sucht alle Artikel mit
+   dieser `regal_nr` in der DB:
+   - **Regal bekannt, Artikel vorhanden** → Liste aller Artikel in diesem Regal
+   - **Regal bekannt, aber leer** → Hinweis „Dieses Regal ist aktuell leer."
+   - **Regalnummer unbekannt** → Hinweis „Unbekanntes Regal"
+   - **Nicht eingeloggt** → Login-Seite, danach automatische Rückkehr zu `regal.php`
+
+### Manuelles Deployment von kir.php
+
+`tools/kir.php` wird **nicht** automatisch deployed – sie muss einmalig manuell in das
+**Root-Verzeichnis** von `sifio.de` hochgeladen werden (nicht in `kulturinventar/`).
+
+```
+sifio.de/
+  kia.php          ← manuell hochladen (aus tools/kia.php)
+  kir.php          ← manuell hochladen (aus tools/kir.php)
+  kulturinventar/
+    goto.php       ← wird automatisch per GitHub Actions deployed
+    regal.php      ← wird automatisch per GitHub Actions deployed
+    ...
+```
+
+Bei Änderungen an `tools/kir.php` ebenfalls manuell erneut hochladen.
+
+---
+
 ## Einrichtung
 
 1. `src/config/config.example.php` kopieren und als `src/config/config.local.php` speichern
