@@ -8,13 +8,9 @@ require_once __DIR__ . '/src/config/database.php';
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
-$standorte = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
-
-// Lagerplätze mit Regalen: Standort => gültige Regalnummern
-$regalBereiche = [
-    'RON'            => range(301, 306),
-    'Großes Magazin' => range(101, 111),
-];
+$lagerorte     = require __DIR__ . '/src/config/lagerorte.php';
+$standorte     = $lagerorte['standorte'];
+$regalBereiche = $lagerorte['regalBereiche'];
 
 $artikel = null;
 if ($id > 0 && $pdo !== null) {

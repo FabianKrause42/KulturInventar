@@ -11,7 +11,9 @@ require_once __DIR__ . '/src/helpers/tags.php';
 $fehler   = [];
 $erfolg   = false;
 
-$standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
+$lagerorte     = require __DIR__ . '/src/config/lagerorte.php';
+$standorte     = $lagerorte['standorte'];
+$regalBereiche = $lagerorte['regalBereiche'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -20,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inventarnummer = trim($_POST['inventarnummer'] ?? '');
     $bezeichnung    = trim($_POST['bezeichnung']    ?? '');
     $standort       = trim($_POST['standort']       ?? '');
+    $regalRaw       = trim($_POST['regal_nr']       ?? '');
     $menge          = (int) ($_POST['menge']        ?? 1);
     $masse          = trim($_POST['masse']          ?? '');
     $bemerkung      = trim($_POST['bemerkung']      ?? '');
@@ -48,15 +51,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($fehler) && $pdo !== null) {
+        $regalNr = null;
+        if (isset($regalBereiche[$standort]) && $regalRaw !== '' && in_array((int) $regalRaw, $regalBereiche[$standort], true)) {
+            $regalNr = (int) $regalRaw;
+        }
+
         $stmt = $pdo->prepare(
             'INSERT INTO inventar
-               (inventarnummer, bezeichnung, standort, menge, masse, bemerkung)
-             VALUES (?, ?, ?, ?, ?, ?)'
+               (inventarnummer, bezeichnung, standort, regal_nr, menge, masse, bemerkung)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $inventarnummer,
             $bezeichnung,
             $standort ?: null,
+            $regalNr,
             $menge,
             $masse     ?: null,
             $bemerkung ?: null,
@@ -98,6 +107,7 @@ $f = [
     'inventarnummer' => $_POST['inventarnummer'] ?? $_GET['inventarnummer'] ?? '',
     'bezeichnung'    => $_POST['bezeichnung']    ?? $_GET['bezeichnung']    ?? '',
     'standort'       => $_POST['standort']       ?? $_GET['standort']       ?? '',
+    'regal_nr'       => $_POST['regal_nr']       ?? $_GET['regal_nr']       ?? '',
     'menge'          => $_POST['menge']          ?? $_GET['menge']          ?? '1',
     'masse'          => $_POST['masse']          ?? $_GET['masse']          ?? '',
     'bemerkung'      => $_POST['bemerkung']      ?? $_GET['bemerkung']      ?? '',
@@ -242,7 +252,7 @@ $f = [
 
                 <div class="select-wrap">
                     <span class="select-label">Standort:</span>
-                    <select name="standort">
+                    <select name="standort" id="standort-select">
                         <option value="" <?= $f['standort'] === '' ? 'selected' : '' ?>>kein</option>
                         <?php foreach ($standorte as $ort): ?>
                             <option value="<?= htmlspecialchars($ort) ?>"
@@ -251,6 +261,8 @@ $f = [
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <span class="select-label regal-label-inline" id="regal-label-inline">, Regal</span>
+                    <select name="regal_nr" id="regal-select" class="regal-select"></select>
                 </div>
 
                 <!-- Menge + Größe nebeneinander -->
@@ -293,6 +305,40 @@ $f = [
 
     <script>
     var BASE_URL = '<?= BASE_URL ?>';
+
+    // ── Regal-Auswahl abhängig vom Standort ─────────────────
+    var REGAL_BEREICHE  = <?= json_encode($regalBereiche) ?>;
+    var INITIAL_REGAL   = <?= $f['regal_nr'] !== '' ? (int) $f['regal_nr'] : 'null' ?>;
+    var standortSelect  = document.getElementById('standort-select');
+    var regalSelect     = document.getElementById('regal-select');
+    var regalLabel      = document.getElementById('regal-label-inline');
+
+    function updateRegalSelect(preserveValue) {
+        var nummern = REGAL_BEREICHE[standortSelect.value];
+
+        if (!nummern) {
+            regalSelect.style.display = 'none';
+            regalLabel.style.display  = 'none';
+            regalSelect.innerHTML     = '';
+            return;
+        }
+
+        regalSelect.style.display = '';
+        regalLabel.style.display  = '';
+
+        var html = '<option value="">kein</option>';
+        nummern.forEach(function (nr) {
+            html += '<option value="' + nr + '">' + nr + '</option>';
+        });
+        regalSelect.innerHTML = html;
+
+        if (preserveValue && INITIAL_REGAL !== null && nummern.indexOf(INITIAL_REGAL) !== -1) {
+            regalSelect.value = String(INITIAL_REGAL);
+        }
+    }
+
+    updateRegalSelect(true);
+    standortSelect.addEventListener('change', function () { updateRegalSelect(false); });
 
     var croppedFile = null;
     var STORAGE_KEY = 'artikel_neu_bild';
@@ -433,7 +479,7 @@ $f = [
     /* ── Scanner-Button ───────────────────────────────────── */
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
-        ['bezeichnung','standort','menge','masse','bemerkung'].forEach(function (name) {
+        ['bezeichnung','standort','regal_nr','menge','masse','bemerkung'].forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
             if (el) params.set(name, el.value);
         });

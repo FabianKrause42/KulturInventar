@@ -18,15 +18,16 @@ if ($id > 0 && $pdo !== null) {
     $artikel = $stmt->fetch() ?: null;
 }
 
-$standorte  = ['RON', 'Schubertsaal', 'Großes Magazin', 'Theaterkeller', 'Werkzeuglager', 'In Gebrauch'];
+$lagerorte     = require __DIR__ . '/src/config/lagerorte.php';
+$standorte     = $lagerorte['standorte'];
+$regalBereiche = $lagerorte['regalBereiche'];
 
 $fehler  = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null) {
-    $origStandort = $artikel['standort'] ?? '';
-
     $bezeichnung = trim($_POST['bezeichnung'] ?? '');
     $standort    = trim($_POST['standort']    ?? '');
+    $regalRaw    = trim($_POST['regal_nr']    ?? '');
     $menge       = (int) ($_POST['menge']     ?? 1);
     $masse       = trim($_POST['masse']       ?? '');
     $bemerkung   = trim($_POST['bemerkung']   ?? '');
@@ -36,8 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
     if ($menge < 1) $menge = 1;
 
     if (empty($fehler)) {
-        // Regalnummer nur behalten, solange der Standort unverändert bleibt
-        $regalNr = ($standort === $origStandort) ? ($artikel['regal_nr'] ?? null) : null;
+        $regalNr = null;
+        if (isset($regalBereiche[$standort]) && $regalRaw !== '' && in_array((int) $regalRaw, $regalBereiche[$standort], true)) {
+            $regalNr = (int) $regalRaw;
+        }
 
         $pdo->prepare(
             'UPDATE inventar
@@ -309,7 +312,7 @@ if ($id > 0 && $pdo !== null) {
 
             <div class="select-wrap">
                 <span class="select-label">Standort:</span>
-                <select name="standort">
+                <select name="standort" id="standort-select">
                     <option value="">kein</option>
                     <?php foreach ($standorte as $ort): ?>
                         <option value="<?= htmlspecialchars($ort) ?>"
@@ -318,10 +321,9 @@ if ($id > 0 && $pdo !== null) {
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <span class="select-label regal-label-inline" id="regal-label-inline">, Regal</span>
+                <select name="regal_nr" id="regal-select" class="regal-select"></select>
             </div>
-            <?php if (!empty($artikel['regal_nr'])): ?>
-                <p class="regal-hint">Regal <?= (int) $artikel['regal_nr'] ?></p>
-            <?php endif; ?>
 
             <div class="form-row">
                 <div class="menge-wrap form-row-small">
@@ -370,6 +372,40 @@ if ($id > 0 && $pdo !== null) {
 (function () {
     var BASE_URL    = '<?= BASE_URL ?>';
     var INVENTAR_ID = <?= $id ?>;
+
+    // ── Regal-Auswahl abhängig vom Standort ─────────────────
+    var REGAL_BEREICHE  = <?= json_encode($regalBereiche) ?>;
+    var INITIAL_REGAL   = <?= $artikel['regal_nr'] !== null ? (int) $artikel['regal_nr'] : 'null' ?>;
+    var standortSelect  = document.getElementById('standort-select');
+    var regalSelect     = document.getElementById('regal-select');
+    var regalLabel      = document.getElementById('regal-label-inline');
+
+    function updateRegalSelect(preserveValue) {
+        var nummern = REGAL_BEREICHE[standortSelect.value];
+
+        if (!nummern) {
+            regalSelect.style.display = 'none';
+            regalLabel.style.display  = 'none';
+            regalSelect.innerHTML     = '';
+            return;
+        }
+
+        regalSelect.style.display = '';
+        regalLabel.style.display  = '';
+
+        var html = '<option value="">kein</option>';
+        nummern.forEach(function (nr) {
+            html += '<option value="' + nr + '">' + nr + '</option>';
+        });
+        regalSelect.innerHTML = html;
+
+        if (preserveValue && INITIAL_REGAL !== null && nummern.indexOf(INITIAL_REGAL) !== -1) {
+            regalSelect.value = String(INITIAL_REGAL);
+        }
+    }
+
+    updateRegalSelect(true);
+    standortSelect.addEventListener('change', function () { updateRegalSelect(false); });
 
     // ── Bild Upload ──────────────────────────────────────────
     var hero         = document.getElementById('hero-upload');

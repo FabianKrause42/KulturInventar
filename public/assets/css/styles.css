@@ -587,12 +587,6 @@ main > form {
     position: relative;
 }
 
-.regal-hint {
-    font-size: 0.85rem;
-    color: #666;
-    margin: -0.5rem 0 0 0.2rem;
-}
-
 .tag-dropdown {
     display: none;
     position: absolute;
@@ -658,6 +652,17 @@ main > form {
     padding-left: 0.35rem;
     flex: 1;
     min-width: 0;
+}
+
+.select-wrap .regal-label-inline {
+    flex-shrink: 0;
+    padding-left: 0.35rem;
+}
+
+.select-wrap select.regal-select {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: auto;
 }
 
 .select-wrap select:focus {
