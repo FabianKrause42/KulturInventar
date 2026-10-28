@@ -119,6 +119,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
             gap: var(--spacing-sm);
         }
 
+        .btn-kein-regal {
+            width: 100%;
+            background: transparent;
+            margin-bottom: var(--spacing-sm);
+        }
+
         .btn-regal-item {
             background: var(--color-btn-standort);
             border: var(--border);
@@ -178,6 +184,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $artikel !== null && $pdo !== null)
         <?php foreach ($regalBereiche as $ort => $nummern): ?>
             <div class="standort-list regal-step" data-ort="<?= htmlspecialchars($ort) ?>" style="display:none">
                 <p class="standort-header-sub"><?= htmlspecialchars($ort) ?> – Regal wählen</p>
+                <button type="submit" name="standort" value="<?= htmlspecialchars($ort) ?>" class="btn-regal-item btn-kein-regal">
+                    Kein Regal
+                </button>
                 <div class="regal-grid">
                     <?php foreach ($nummern as $nr): ?>
                         <button type="submit" name="regal_nr" value="<?= $nr ?>" class="btn-regal-item">
