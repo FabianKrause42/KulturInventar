@@ -654,17 +654,6 @@ main > form {
     min-width: 0;
 }
 
-.select-wrap .regal-label-inline {
-    flex-shrink: 0;
-    padding-left: 0.35rem;
-}
-
-.select-wrap select.regal-select {
-    flex: 0 0 auto;
-    min-width: 0;
-    width: auto;
-}
-
 .select-wrap select:focus {
     box-shadow: none;
     outline: none;

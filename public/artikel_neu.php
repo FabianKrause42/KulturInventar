@@ -21,12 +21,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $inventarnummer = trim($_POST['inventarnummer'] ?? '');
     $bezeichnung    = trim($_POST['bezeichnung']    ?? '');
-    $standort       = trim($_POST['standort']       ?? '');
-    $regalRaw       = trim($_POST['regal_nr']       ?? '');
+    $standortRegal  = trim($_POST['standort_regal'] ?? '');
     $menge          = (int) ($_POST['menge']        ?? 1);
     $masse          = trim($_POST['masse']          ?? '');
     $bemerkung      = trim($_POST['bemerkung']      ?? '');
     $tagsRaw        = trim($_POST['tags']           ?? '');
+
+    $standort = '';
+    $regalNr  = null;
+    if ($standortRegal !== '') {
+        [$standort, $regalRaw] = array_pad(explode('|', $standortRegal, 2), 2, '');
+        if (isset($regalBereiche[$standort]) && $regalRaw !== '' && in_array((int) $regalRaw, $regalBereiche[$standort], true)) {
+            $regalNr = (int) $regalRaw;
+        }
+    }
 
     // Validierung
     if ($inventarnummer === '') {
@@ -51,11 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($fehler) && $pdo !== null) {
-        $regalNr = null;
-        if (isset($regalBereiche[$standort]) && $regalRaw !== '' && in_array((int) $regalRaw, $regalBereiche[$standort], true)) {
-            $regalNr = (int) $regalRaw;
-        }
-
         $stmt = $pdo->prepare(
             'INSERT INTO inventar
                (inventarnummer, bezeichnung, standort, regal_nr, menge, masse, bemerkung)
@@ -252,17 +255,33 @@ $f = [
 
                 <div class="select-wrap">
                     <span class="select-label">Standort:</span>
-                    <select name="standort" id="standort-select">
-                        <option value="" <?= $f['standort'] === '' ? 'selected' : '' ?>>kein</option>
+                    <?php
+                        $currentValue = $f['standort'] === '' ? '' : $f['standort'] . '|' . $f['regal_nr'];
+                    ?>
+                    <select name="standort_regal" id="standort-regal-select">
+                        <option value="" <?= $currentValue === '' ? 'selected' : '' ?>>kein</option>
                         <?php foreach ($standorte as $ort): ?>
-                            <option value="<?= htmlspecialchars($ort) ?>"
-                                <?= $f['standort'] === $ort ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($ort) ?>
-                            </option>
+                            <?php if (isset($regalBereiche[$ort])): ?>
+                                <optgroup label="<?= htmlspecialchars($ort) ?>">
+                                    <option value="<?= htmlspecialchars($ort) ?>|"
+                                        <?= $currentValue === $ort . '|' ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($ort) ?> (kein Regal)
+                                    </option>
+                                    <?php foreach ($regalBereiche[$ort] as $nr): ?>
+                                        <option value="<?= htmlspecialchars($ort) ?>|<?= $nr ?>"
+                                            <?= $currentValue === $ort . '|' . $nr ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($ort) ?>, Regal <?= $nr ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php else: ?>
+                                <option value="<?= htmlspecialchars($ort) ?>|"
+                                    <?= $currentValue === $ort . '|' ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($ort) ?>
+                                </option>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
-                    <span class="select-label regal-label-inline" id="regal-label-inline">, Regal</span>
-                    <select name="regal_nr" id="regal-select" class="regal-select"></select>
                 </div>
 
                 <!-- Menge + Größe nebeneinander -->
@@ -305,40 +324,6 @@ $f = [
 
     <script>
     var BASE_URL = '<?= BASE_URL ?>';
-
-    // ── Regal-Auswahl abhängig vom Standort ─────────────────
-    var REGAL_BEREICHE  = <?= json_encode($regalBereiche) ?>;
-    var INITIAL_REGAL   = <?= $f['regal_nr'] !== '' ? (int) $f['regal_nr'] : 'null' ?>;
-    var standortSelect  = document.getElementById('standort-select');
-    var regalSelect     = document.getElementById('regal-select');
-    var regalLabel      = document.getElementById('regal-label-inline');
-
-    function updateRegalSelect(preserveValue) {
-        var nummern = REGAL_BEREICHE[standortSelect.value];
-
-        if (!nummern) {
-            regalSelect.style.display = 'none';
-            regalLabel.style.display  = 'none';
-            regalSelect.innerHTML     = '';
-            return;
-        }
-
-        regalSelect.style.display = '';
-        regalLabel.style.display  = '';
-
-        var html = '<option value="">kein</option>';
-        nummern.forEach(function (nr) {
-            html += '<option value="' + nr + '">' + nr + '</option>';
-        });
-        regalSelect.innerHTML = html;
-
-        if (preserveValue && INITIAL_REGAL !== null && nummern.indexOf(INITIAL_REGAL) !== -1) {
-            regalSelect.value = String(INITIAL_REGAL);
-        }
-    }
-
-    updateRegalSelect(true);
-    standortSelect.addEventListener('change', function () { updateRegalSelect(false); });
 
     var croppedFile = null;
     var STORAGE_KEY = 'artikel_neu_bild';
@@ -479,7 +464,11 @@ $f = [
     /* ── Scanner-Button ───────────────────────────────────── */
     document.getElementById('btn-scan-neu').addEventListener('click', function () {
         var params = new URLSearchParams({ context: 'neu' });
-        ['bezeichnung','standort','regal_nr','menge','masse','bemerkung'].forEach(function (name) {
+        var standortRegalValue = document.getElementById('standort-regal-select').value;
+        var standortRegalParts = standortRegalValue.split('|');
+        params.set('standort', standortRegalParts[0] || '');
+        params.set('regal_nr', standortRegalParts[1] || '');
+        ['bezeichnung','menge','masse','bemerkung'].forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
             if (el) params.set(name, el.value);
         });
