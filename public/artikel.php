@@ -150,6 +150,39 @@ if ($id > 0 && $pdo !== null) {
             color: var(--color-text-muted, #888);
             font-size: 0.9rem;
         }
+
+        /* ── Standort-Auswahl (eigenes Bottom-Sheet) ─────────── */
+        .standort-display-btn {
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            text-align: left;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            padding-right: 0.9rem;
+        }
+        .standort-display-btn span:last-child {
+            padding-left: 0.35rem;
+            color: var(--color-text);
+        }
+        .regal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+        }
+        .btn-regal-item {
+            background: var(--color-input-bg, #e8e8e8);
+            border: none;
+            border-radius: var(--radius, 8px);
+            padding: 0.75rem 0.25rem;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-regal-item:active { opacity: 0.7; }
+
         .detail-wrap {
             display: flex;
             flex-direction: column;
@@ -314,37 +347,51 @@ if ($id > 0 && $pdo !== null) {
                 >
             </div>
 
-            <div class="select-wrap">
+            <?php
+                $currentStandort = $artikel['standort'] ?? '';
+                $currentRegal    = $artikel['regal_nr'] ?? null;
+                $currentValue    = $currentStandort === '' ? '' : $currentStandort . '|' . ($currentRegal ?? '');
+            ?>
+            <input type="hidden" name="standort_regal" id="standort-regal-value" value="<?= htmlspecialchars($currentValue) ?>">
+            <button type="button" class="select-wrap standort-display-btn" id="standort-display-btn">
                 <span class="select-label">Standort:</span>
-                <?php
-                    $currentStandort = $artikel['standort'] ?? '';
-                    $currentRegal    = $artikel['regal_nr'] ?? null;
-                    $currentValue    = $currentStandort === '' ? '' : $currentStandort . '|' . ($currentRegal ?? '');
-                ?>
-                <select name="standort_regal" id="standort-regal-select">
-                    <option value="" <?= $currentValue === '' ? 'selected' : '' ?>>kein</option>
+                <span id="standort-display-text"></span>
+            </button>
+
+            <div class="bild-sheet-backdrop" id="standort-sheet-backdrop">
+                <div class="bild-sheet" id="standort-step-liste">
+                    <p class="bild-sheet-title">Standort wählen</p>
+                    <button type="button" class="bild-sheet-btn" data-standort-value="">kein</button>
                     <?php foreach ($standorte as $ort): ?>
                         <?php if (isset($regalBereiche[$ort])): ?>
-                            <optgroup label="<?= htmlspecialchars($ort) ?>">
-                                <option value="<?= htmlspecialchars($ort) ?>|"
-                                    <?= $currentValue === $ort . '|' ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($ort) ?> (kein Regal)
-                                </option>
-                                <?php foreach ($regalBereiche[$ort] as $nr): ?>
-                                    <option value="<?= htmlspecialchars($ort) ?>|<?= $nr ?>"
-                                        <?= $currentValue === $ort . '|' . $nr ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($ort) ?>, Regal <?= $nr ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </optgroup>
-                        <?php else: ?>
-                            <option value="<?= htmlspecialchars($ort) ?>|"
-                                <?= $currentValue === $ort . '|' ? 'selected' : '' ?>>
+                            <button type="button" class="bild-sheet-btn" data-regal-ort="<?= htmlspecialchars($ort) ?>">
                                 <?= htmlspecialchars($ort) ?>
-                            </option>
+                            </button>
+                        <?php else: ?>
+                            <button type="button" class="bild-sheet-btn" data-standort-value="<?= htmlspecialchars($ort) ?>|">
+                                <?= htmlspecialchars($ort) ?>
+                            </button>
                         <?php endif; ?>
                     <?php endforeach; ?>
-                </select>
+                    <button type="button" class="bild-sheet-btn bild-sheet-cancel" id="standort-sheet-abbrechen">Abbrechen</button>
+                </div>
+
+                <?php foreach ($regalBereiche as $ort => $nummern): ?>
+                    <div class="bild-sheet standort-step-regal" data-ort="<?= htmlspecialchars($ort) ?>" style="display:none">
+                        <p class="bild-sheet-title"><?= htmlspecialchars($ort) ?> – Regal wählen</p>
+                        <button type="button" class="bild-sheet-btn" data-standort-value="<?= htmlspecialchars($ort) ?>|">
+                            Kein Regal
+                        </button>
+                        <div class="regal-grid">
+                            <?php foreach ($nummern as $nr): ?>
+                                <button type="button" class="btn-regal-item" data-standort-value="<?= htmlspecialchars($ort) ?>|<?= $nr ?>">
+                                    Regal <?= $nr ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="bild-sheet-btn bild-sheet-cancel standort-regal-zurueck">Zurück</button>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="form-row">
@@ -394,6 +441,58 @@ if ($id > 0 && $pdo !== null) {
 (function () {
     var BASE_URL    = '<?= BASE_URL ?>';
     var INVENTAR_ID = <?= $id ?>;
+
+    // ── Standort/Regal-Auswahl (Bottom-Sheet) ───────────────
+    var standortValueInput = document.getElementById('standort-regal-value');
+    var standortDisplay    = document.getElementById('standort-display-text');
+    var standortBtn        = document.getElementById('standort-display-btn');
+    var standortBackdrop   = document.getElementById('standort-sheet-backdrop');
+    var standortStepListe  = document.getElementById('standort-step-liste');
+
+    function formatStandortDisplay(value) {
+        if (value === '') return 'kein';
+        var teile = value.split('|');
+        return teile[1] ? teile[0] + ', Regal ' + teile[1] : teile[0];
+    }
+
+    function oeffneStandortSheet() {
+        standortStepListe.style.display = '';
+        document.querySelectorAll('.standort-step-regal').forEach(function (el) {
+            el.style.display = 'none';
+        });
+        standortBackdrop.classList.add('open');
+    }
+    function schliesseStandortSheet() { standortBackdrop.classList.remove('open'); }
+
+    function waehleStandort(value) {
+        standortValueInput.value = value;
+        standortDisplay.textContent = formatStandortDisplay(value);
+        standortValueInput.dispatchEvent(new Event('change', { bubbles: true }));
+        schliesseStandortSheet();
+    }
+
+    standortDisplay.textContent = formatStandortDisplay(standortValueInput.value);
+    standortBtn.addEventListener('click', oeffneStandortSheet);
+    document.getElementById('standort-sheet-abbrechen').addEventListener('click', schliesseStandortSheet);
+    standortBackdrop.addEventListener('click', function (e) {
+        if (e.target === standortBackdrop) schliesseStandortSheet();
+    });
+
+    document.querySelectorAll('[data-standort-value]').forEach(function (btn) {
+        btn.addEventListener('click', function () { waehleStandort(this.dataset.standortValue); });
+    });
+    document.querySelectorAll('[data-regal-ort]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var ort = this.dataset.regalOrt;
+            standortStepListe.style.display = 'none';
+            document.querySelectorAll('.standort-step-regal').forEach(function (el) {
+                el.style.display = (el.dataset.ort === ort) ? '' : 'none';
+            });
+        });
+    });
+    document.querySelectorAll('.standort-regal-zurueck').forEach(function (btn) {
+        btn.addEventListener('click', oeffneStandortSheet);
+    });
 
     // ── Bild Upload ──────────────────────────────────────────
     var hero         = document.getElementById('hero-upload');
